@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  
 [![PyPI version](https://badge.fury.io/py/point-cloud-registration.svg)](https://badge.fury.io/py/point-cloud-registration)  
 
-**`point-cloud-registration`** is a pure Python, lightweight, and fast point cloud registration library.  
+**`point-cloud-registration`** is a **pure Python**, **lightweight**, and **fast** point cloud registration library.  
 It outperforms Open3D’s registration in speed while relying **only on NumPy** for computations.
 
 ## Features  
@@ -18,14 +18,14 @@ It outperforms Open3D’s registration in speed while relying **only on NumPy** 
 | Method                        | Objective Function*                                         | Data Representation   | Speed         | Precision    |
 |-------------------------------|-----------------------------------------------------------|------------------------|---------------|--------------|
 | Point-to-Point ICP         | $\sum \| T p_i - q_i \|^2$   | Point-Based            | Fast          | Moderate     |
-| Point-to-Plane ICP         | $\sum n_i^T (T p_i - q_i)$ | Point-Based (with normals) | Fast | High | 
-| Voxelized Point-to-Plane ICP         | $\sum n_i^T (T p_i - q_i)$ | Voxel-Based (with normals) | Very Fast | High | 
+| Point-to-Plane ICP         | $\sum \| n_i^T (T p_i - q_i) \|^2 $ | Point-Based (with normals) | Fast | High | 
+| Voxelized Point-to-Plane ICP         | $\sum \| n_i^T (T p_i - q_i) \|^2 $ | Voxel-Based (with normals) | Very Fast | High | 
 | Generalized ICP (GICP)     | $\sum (T p_i - q_i)^T (C_i^Q + R C_i^P R^T)^{-1} (T p_i - q_i)$ | Point-Based (with covariances) | Moderate | Very High | 
-| Normal Distributions Transform (NDT) | $\sum \exp \left( -\frac{(T p_i - \boldsymbol{\mu}_i)^T \Sigma_i^{-1} (T p_i - \boldsymbol{\mu}_i)}{2} \right)$ | Voxel-Based (with covariances) | Very Fast | Moderate |
+| Normal Distributions Transform (NDT) | $ \sum (T p_i - \mu_i)^T \Sigma_i^{-1} (T p_i - \mu_i)$ | Voxel-Based (with covariances) | Very Fast | Moderate |
 
 ---
 
-**For more details, check the documentation.**
+**For more details, check the documentation.*
 
 
 ## Installation  
