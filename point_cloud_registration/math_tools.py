@@ -42,7 +42,8 @@ def makeRt(T):
 def expSO3(omega):
     """
     Exponential map of SO3
-    The proof is shown in 3d_rotation_group.md (10)
+    see:
+    https://github.com/scomup/MathematicalRobotics/blob/main/docs/3d_rotation_group.md
     """
     theta2 = omega.dot(omega)
     theta = np.sqrt(theta2)

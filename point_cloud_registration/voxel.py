@@ -1,10 +1,13 @@
 import numpy as np
-import q3dviewer as q3d
 from collections import defaultdict
 from scipy.spatial import cKDTree
 
 
-class Cell:
+class VoxelCell:
+    """
+    Store the normal distribution information of a voxel cell,
+    used for Normal Distributions Transform and Point-to-Plane ICP.
+    """
     def __init__(self):
         self.num = 0
         self.sum = np.zeros(3)
@@ -23,22 +26,37 @@ class Cell:
         _, eigenvectors = np.linalg.eigh(self.cov)
         self.norm = eigenvectors[:, 0]
 
+    def set_points(self, points):
+        self.num = points.shape[0]
+        self.sum = np.sum(points, axis=0)
+        self.ppt = np.dot(points.T, points)
+        self.mean = self.sum / self.num
+        self.cov = (self.ppt - 2 * np.outer(self.sum, self.mean)) / \
+            self.num + np.outer(self.mean, self.mean)
+        _, eigenvectors = np.linalg.eigh(self.cov)
+        self.norm = eigenvectors[:, 0]
+
 
 class VoxelGrid:
+    """
+    An efficient VoxelGrid structure using hash table
+    """
     def __init__(self, voxel_size):
         self.voxel_size = voxel_size
-        self.voxels = defaultdict(Cell)
+        self.voxels = defaultdict(VoxelCell)
         self.kdtree = None
         self.voxel_keys = None
 
     @ staticmethod
-    def get_keys(points, voxel_size):
-        # Calculate voxel indices for all points
-        voxel_indices = np.floor(points / voxel_size).astype(int)
-        HASH_P1, HASH_P2 = 116101, 387
-        MAX_N = 10000000000
-        keys = ((voxel_indices[:, 2] * HASH_P1 + voxel_indices[:, 1])
-                * HASH_P2 + voxel_indices[:, 0]) % MAX_N
+    def get_keys(points, voxel_size=1):
+        """
+        a faster hash for 3d points
+        """
+        voxel_indices = (points // voxel_size).astype(np.int64)
+        P1 = 2654435761  # Large prime (from Knuth)
+        P2 = 5915587277  # Another large prime
+        # Fast hash computation using multiply-shift-xor
+        keys = (voxel_indices[:,0] * P1) ^ (voxel_indices[:,1] * P2) ^ voxel_indices[:,2]
         return keys
 
     def add_points(self, points):
@@ -58,7 +76,7 @@ class VoxelGrid:
             self.voxel_keys.append(key)
         self.kdtree = cKDTree(np.array(voxel_points))
 
-    def find_cell(self, point):
+    def find(self, point):
         # usd kdtree to find the nearest cell
         _, idx = self.kdtree.query(point)
         key = list(self.voxels.keys())[idx]
@@ -84,14 +102,20 @@ def color_by_voxel(points, voxel_size):
     return point_colors
 
 if __name__ == '__main__':
-
-    # Generate N x 3 points
+    try:
+        import q3dviewer as q3d
+    except ImportError:
+        print("Please install q3dviewer using 'pip install q3dviewer'")
+        exit(0)
 
     points, _ = q3d.load_pcd("/home/liu/tmp/recorded_frames/clouds/1.pcd")
-    voxel_size = 0.3
+    voxel_size = 0.5
     voxels = VoxelGrid(voxel_size)
+    import time
+    t1 = time.time()
     voxels.add_points(points['xyz'])
-
+    t2 = time.time()
+    print(f"add points time: {t2 - t1}")
     app = q3d.QApplication([])
 
     # create viewer
@@ -107,7 +131,6 @@ if __name__ == '__main__':
 
     lines = []
     for key, cell in voxels.voxels.items():
-        if cell.good:
             lines.append(cell.mean)
             lines.append(cell.mean + cell.norm * 0.1)
     lines = np.array(lines)

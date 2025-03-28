@@ -8,7 +8,7 @@ Here’s your updated README with the **Roadmap** including GICP, Point-to-Point
 [![PyPI version](https://badge.fury.io/py/point-cloud-registration.svg)](https://badge.fury.io/py/point-cloud-registration)  
 
 **`point-cloud-registration`** is a **pure Python**, lightweight, and fast point cloud registration library.  
-It is designed to be **faster** than Open3D’s registration while using **only NumPy** for computations—no external dependencies beyond Python’s standard library.  
+It is designed to be **faster** than Open3D’s registration while using **only NumPy** for computations.  
 
 ## Features  
 ✅ **Pure Python** – No compiled extensions, works everywhere  

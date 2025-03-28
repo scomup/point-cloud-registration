@@ -1,3 +1,16 @@
+"""
+Python implementation of Caratheodory's theorem-based algorithms for exact point cloud downsampling.
+
+Based on:
+K. Koide, "Exact Point Cloud Downsampling for Fast and Accurate Global Trajectory Optimization,"
+arXiv preprint arXiv:2307.02948v3, 2023. https://arxiv.org/abs/2307.02948
+
+This module includes:
+- Caratheodory's algorithm for finding exact coresets.
+- Fast Caratheodory's algorithm for efficient coreset extraction.
+- Utility functions for creating point sets from Jacobians and residuals.
+"""
+
 import numpy as np
 
 def null_space(P, tol=1e-12):
