@@ -1,1 +1,4 @@
 *.pyc
+build/
+dist/
+point-cloud-registration.egg-info/
