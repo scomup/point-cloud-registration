@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  
 [![PyPI version](https://badge.fury.io/py/point-cloud-registration.svg)](https://badge.fury.io/py/point-cloud-registration)  
 
-**`point-cloud-registration`** is a **pure Python**, **lightweight**, and **fast** point cloud registration library.  
+**`point-cloud-registration`** is a pure Python, lightweight, and fast point cloud registration library.  
 It outperforms Open3D’s registration in speed while relying **only on NumPy** for computations.
 
 ## Features  
@@ -17,11 +17,11 @@ It outperforms Open3D’s registration in speed while relying **only on NumPy** 
 
 | Method                        | Objective Function*                                         | Data Representation   | Speed         | Precision    |
 |-------------------------------|-----------------------------------------------------------|------------------------|---------------|--------------|
-| **Point-to-Point ICP**         | $\sum \| T p_i - q_i \|^2$   | Point-Based            | Fast          | Moderate     |
-| **Point-to-Plane ICP**         | $\sum n_i^T (T p_i - q_i)$ | Point-Based (with normals) | Fast | High | 
-| **Voxelized Point-to-Plane ICP**         | $\sum n_i^T (T p_i - q_i)$ | Voxel-Based (with normals) | Very Fast | High | 
-| **Generalized ICP (GICP)**     | $\sum (T p_i - q_i)^T (\mathbf{C}_i^Q + \mathbf{R} \mathbf{C}_i^P \mathbf{R}^T)^{-1} (T p_i - q_i)$ | Point-Based (with covariances) | Moderate | Very High | 
-| **Normal Distributions Transform (NDT)** | $\sum \exp \left( -\frac{(T p_i - \boldsymbol{\mu}_i)^T \mathbf{\Sigma}_i^{-1} (T p_i - \boldsymbol{\mu}_i)}{2} \right)$ | Voxel-Based (with covariances) | Very Fast | Moderate |
+| Point-to-Point ICP         | $\sum \| T p_i - q_i \|^2$   | Point-Based            | Fast          | Moderate     |
+| Point-to-Plane ICP         | $\sum n_i^T (T p_i - q_i)$ | Point-Based (with normals) | Fast | High | 
+| Voxelized Point-to-Plane ICP         | $\sum n_i^T (T p_i - q_i)$ | Voxel-Based (with normals) | Very Fast | High | 
+| Generalized ICP (GICP)     | $\sum (T p_i - q_i)^T (C_i^Q + R C_i^P R^T)^{-1} (T p_i - q_i)$ | Point-Based (with covariances) | Moderate | Very High | 
+| Normal Distributions Transform (NDT) | $\sum \exp \left( -\frac{(T p_i - \boldsymbol{\mu}_i)^T \Sigma_i^{-1} (T p_i - \boldsymbol{\mu}_i)}{2} \right)$ | Voxel-Based (with covariances) | Very Fast | Moderate |
 
 ---
 
@@ -51,7 +51,6 @@ scan = np.random.rand(80, 3)    # Mx3 point numpy array
 icp = VoxelPoint2PlaneICP(voxel_size=0.5, max_iter=100, max_dist=2, tol=1e-3)
 icp.update_target(target)  # Set the target point cloud
 T_new = icp.fit(scan, init_T=np.eye(4))  # Fit the scan to the target
-from point_cloud_registration.math_tools import makeRt
 print("Estimated Transform matrix:\n", T_new)
 ```
 
