@@ -17,13 +17,15 @@ It outperforms Open3D’s registration in speed while relying **only on NumPy** 
 
 | Method                        | Objective Function*                                         | Data Representation   | Speed         | Precision    |
 |-------------------------------|-----------------------------------------------------------|------------------------|---------------|--------------|
-| **Point-to-Point ICP**         | $  \sum \| T p_i - q_i \|^2 $   | Point-Based            | Fast          | Moderate     |
-| **Point-to-Plane ICP**         | $  \sum n_i^T (T p_i - q_i) $ | Point-Based (with normals) | Fast | High | 
-| **Voxelized Point-to-Plane ICP**         | $  \sum n_i^T (T p_i - q_i) $ | Voxel-Based (with normals) | Very Fast | High | 
-| **Generalized ICP (GICP)**     | $  \sum (T p_i - q_i)^T (\mathbf{C}_i^Q + \mathbf{R} \mathbf{C}_i^P \mathbf{R}^T)^{-1} (T p_i - q_i) $ | Point-Based (with covariances) | Moderate | Very High | 
-| **Normal Distributions Transform (NDT)** | $  \sum \exp \left( -\frac{(T p_i - \boldsymbol{\mu}_i)^T \mathbf{\Sigma}_i^{-1} (T p_i - \boldsymbol{\mu}_i)}{2} \right) $ | Voxel-Based (with covariances) | Very Fast | Moderate |
+| **Point-to-Point ICP**         | $\sum \| T p_i - q_i \|^2$   | Point-Based            | Fast          | Moderate     |
+| **Point-to-Plane ICP**         | $\sum n_i^T (T p_i - q_i)$ | Point-Based (with normals) | Fast | High | 
+| **Voxelized Point-to-Plane ICP**         | $\sum n_i^T (T p_i - q_i)$ | Voxel-Based (with normals) | Very Fast | High | 
+| **Generalized ICP (GICP)**     | $\sum (T p_i - q_i)^T (\mathbf{C}_i^Q + \mathbf{R} \mathbf{C}_i^P \mathbf{R}^T)^{-1} (T p_i - q_i)$ | Point-Based (with covariances) | Moderate | Very High | 
+| **Normal Distributions Transform (NDT)** | $\sum \exp \left( -\frac{(T p_i - \boldsymbol{\mu}_i)^T \mathbf{\Sigma}_i^{-1} (T p_i - \boldsymbol{\mu}_i)}{2} \right)$ | Voxel-Based (with covariances) | Very Fast | Moderate |
+
 ---
-**For more details, check the documentation.*
+
+**For more details, check the documentation.**
 
 
 ## Installation  
