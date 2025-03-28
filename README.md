@@ -21,7 +21,7 @@ It outperforms Open3D’s registration in speed while relying **only on NumPy** 
 | Point-to-Plane ICP         | $\sum \| n_i^T (T p_i - q_i) \|^2 $ | Point-Based (with normals) | Fast | High | 
 | Voxelized Point-to-Plane ICP         | $\sum \| n_i^T (T p_i - q_i) \|^2 $ | Voxel-Based (with normals) | Very Fast | High | 
 | Generalized ICP (GICP)     | $\sum (T p_i - q_i)^T (C_i^Q + R C_i^P R^T)^{-1} (T p_i - q_i)$ | Point-Based (with covariances) | Moderate | Very High | 
-| Normal Distributions Transform (NDT) | $ \sum (T p_i - \mu_i)^T \Sigma_i^{-1} (T p_i - \mu_i)$ | Voxel-Based (with covariances) | Very Fast | Moderate |
+| Normal Distributions Transform (NDT) | $\sum (T p_i - \mu_i)^T \Sigma_i^{-1} (T p_i - \mu_i)$ | Voxel-Based (with covariances) | Very Fast | Moderate |
 
 ---
 
