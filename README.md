@@ -1,19 +1,30 @@
-Here’s your updated README with the **Roadmap** including GICP, Point-to-Point ICP, Point-to-Plane ICP, and NDT:  
-
----
 
 # Point Cloud Registration  
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  
 [![PyPI version](https://badge.fury.io/py/point-cloud-registration.svg)](https://badge.fury.io/py/point-cloud-registration)  
 
-**`point-cloud-registration`** is a **pure Python**, lightweight, and fast point cloud registration library.  
-It is designed to be **faster** than Open3D’s registration while using **only NumPy** for computations.  
+**`point-cloud-registration`** is a **pure Python**, **lightweight**, and **fast** point cloud registration library.  
+It outperforms Open3D’s registration in speed while relying **only on NumPy** for computations.
 
 ## Features  
 ✅ **Pure Python** – No compiled extensions, works everywhere  
 ✅ **Fast & Lightweight** – Optimized algorithms with minimal overhead  
 ✅ **NumPy-based API** – Seamless integration with scientific computing workflows  
+
+
+### Comparison of Registration Methods
+
+| Method                        | Objective Function*                                         | Data Representation   | Speed         | Precision    |
+|-------------------------------|-----------------------------------------------------------|------------------------|---------------|--------------|
+| **Point-to-Point ICP**         | $  \sum \| T p_i - q_i \|^2 $   | Point-Based            | Fast          | Moderate     |
+| **Point-to-Plane ICP**         | $  \sum n_i^T (T p_i - q_i) $ | Point-Based (with normals) | Fast | High | 
+| **Voxelized Point-to-Plane ICP**         | $  \sum n_i^T (T p_i - q_i) $ | Voxel-Based (with normals) | Very Fast | High | 
+| **Generalized ICP (GICP)**     | $  \sum (T p_i - q_i)^T (\mathbf{C}_i^Q + \mathbf{R} \mathbf{C}_i^P \mathbf{R}^T)^{-1} (T p_i - q_i) $ | Point-Based (with covariances) | Moderate | Very High | 
+| **Normal Distributions Transform (NDT)** | $  \sum \exp \left( -\frac{(T p_i - \boldsymbol{\mu}_i)^T \mathbf{\Sigma}_i^{-1} (T p_i - \boldsymbol{\mu}_i)}{2} \right) $ | Voxel-Based (with covariances) | Very Fast | Moderate |
+---
+**For more details, check the documentation.*
+
 
 ## Installation  
 
@@ -53,7 +64,3 @@ print("Estimated Transform matrix:\n", T_new)
 ## License  
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.  
-
----
-
-This version makes the **Roadmap** more structured and exciting! Let me know if you want any refinements. 🚀🔥

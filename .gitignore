@@ -2,3 +2,5 @@
 build/
 dist/
 point-cloud-registration.egg-info/
+point_cloud_registration.egg-info/PKG-INFO
+point_cloud_registration.egg-info/*.txt
