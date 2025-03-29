@@ -1,8 +1,8 @@
 
 # Point Cloud Registration  
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  
-[![PyPI version](https://badge.fury.io/py/point-cloud-registration.svg)](https://pypi.org/project/point-cloud-registration/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI version](https://badge.fury.io/py/point-cloud-registration.svg?cache=1)](https://pypi.org/project/point-cloud-registration/)
 
 **`point-cloud-registration`** is a **pure Python**, **lightweight**, and **fast** point cloud registration library.  
 It outperforms Open3D’s registration in speed while relying **only on NumPy** for computations.
