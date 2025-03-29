@@ -4,5 +4,5 @@ from point_cloud_registration.icp import ICP
 from point_cloud_registration.kdtree import KDTree
 from point_cloud_registration.registration import Registration
 from point_cloud_registration.voxel import VoxelGrid
-from point_cloud_registration.math_tools import makeRt, expSO3, makeT, skews, huber_weight
+from point_cloud_registration.math_tools import makeRt, expSO3, makeT, skews, huber_weight, plus, transform_points
 from point_cloud_registration.ndt import NDT

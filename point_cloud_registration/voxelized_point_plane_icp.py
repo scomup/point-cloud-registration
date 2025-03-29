@@ -1,7 +1,7 @@
 import numpy as np
 from point_cloud_registration.registration import Registration
 from point_cloud_registration.voxel import VoxelGrid
-from point_cloud_registration.math_tools import makeRt, expSO3, makeT, skews, huber_weight
+from point_cloud_registration.math_tools import makeRt, plus, skews, transform_points
 
 
 class VoxelizedPoint2PlaneICP(Registration):
@@ -16,7 +16,27 @@ class VoxelizedPoint2PlaneICP(Registration):
             self.voxels = VoxelGrid(self.voxel_size)
         self.voxels.add_points(target)
 
+    def set_target(self, target):
+        self.voxels = None
+        self.update_target(target)
+
     def linearize(self, cur_T, source):
-            R, t = makeRt(cur_T)
-            source_trans = (R @ source.T).T + t
-           
+        R = cur_T[:3, :3]
+        source_trans = transform_points(cur_T, source)
+        dist, idx = self.voxels.kdtree.query(
+            source_trans.astype(np.float32))
+        Js = np.zeros([source.shape[0], 1, 6])
+        # Find corresponding target points
+        means = np.array(
+            [self.voxels.voxels[self.voxels.voxel_keys[i]].mean for i in idx])
+        norms = np.array(
+            [self.voxels.voxels[self.voxels.voxel_keys[i]].norm for i in idx])
+        # Compute transformation
+        rs = np.einsum('ij,ij->i', norms, source_trans - means)[:, np.newaxis]
+        Js[:, 0, :3] = norms
+        Js[:, 0, 3:] = np.einsum('ijk,ki->ij', skews(source),
+                                 R.T @ norms.T)
+        weights = np.ones(source.shape[0])
+        weights[dist > self.max_dist] = 0
+        return Js, rs, weights
+

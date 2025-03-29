@@ -69,13 +69,13 @@ if __name__ == '__main__':
     T_icp, time_icp = test_icp(
         map_points, scan_points, max_iter, tol, max_dist)
     print(
-        f"VoxelPoint2PlaneICP: Time = {time_icp:.4f}s, Transformation:\n{T_icp}")
-    
+        f"Point2PointICP: Time = {time_icp:.4f}s, Transformation:\n{T_icp}")
+
     # Test VoxelizedPoint2PlaneICP
     voxel_size = 0.5
     T_vppicp, time_vppicp = test_vppicp(
         map_points, scan_points, max_iter, tol, max_dist, voxel_size)
-    
+
     print(
         f"VoxelizedPoint2PlaneICP: Time = {time_vppicp:.4f}s, Transformation:\n{T_vppicp}")
 

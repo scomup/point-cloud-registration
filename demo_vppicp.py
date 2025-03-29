@@ -1,4 +1,4 @@
-from point_cloud_registration import VoxelPoint2PlaneICP
+from point_cloud_registration import VoxelizedPoint2PlaneICP
 from point_cloud_registration import ICP
 
 from point_cloud_registration.math_tools import makeRt
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     #               [0.,  0.,  0.,  1.]])
 
     # T = np.eye(4)
-    icp = ICP(max_iter=100, max_dist=2, tol=1e-5)
+    icp = VoxelizedPoint2PlaneICP(voxel_size=0.5, max_iter=100, max_dist=2, tol=1e-5)
     icp.set_target(map)
     T_new = icp.fit(scan, init_T=T, verbose=True)
     icp.max_dist = 0.1

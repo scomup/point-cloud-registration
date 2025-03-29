@@ -56,7 +56,7 @@ print("Estimated Transform matrix:\n", T_new)
 
 ## Roadmap  
 🚀 **Upcoming Features & Enhancements**:  
-- [ ] **Point-to-Point ICP** – Basic ICP implementation  
+- [x] **Point-to-Point ICP** – Basic ICP implementation  
 - [ ] **Point-to-Plane ICP** – Improved accuracy using normal constraints  
 - [ ] **Generalized ICP (GICP)** – Handles anisotropic noise and improves robustness  
 - [ ] **Normal Distributions Transform (NDT)** – Grid-based registration for high-noise environments  
