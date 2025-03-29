@@ -1,6 +1,6 @@
 import numpy as np
 from collections import defaultdict
-from scipy.spatial import cKDTree
+from point_cloud_registration.kdtree import KDTree
 
 
 class VoxelCell:
@@ -13,7 +13,7 @@ class VoxelCell:
         self.sum = np.zeros(3)
         self.ppt = np.zeros([3, 3])
         self.mean = np.zeros(3)
-        self.cov = np.zeros([3, 3])
+        self.icov = np.zeros([3, 3]) # inverse covariance
         self.norm = np.zeros(3)
 
     def add_points(self, points):
@@ -21,10 +21,11 @@ class VoxelCell:
         self.sum += np.sum(points, axis=0)
         self.ppt += np.dot(points.T, points)
         self.mean = self.sum / self.num
-        self.cov = (self.ppt - 2 * np.outer(self.sum, self.mean)) / \
+        cov = (self.ppt - 2 * np.outer(self.sum, self.mean)) / \
             self.num + np.outer(self.mean, self.mean)
-        _, eigenvectors = np.linalg.eigh(self.cov)
+        _, eigenvectors = np.linalg.eigh(cov)
         self.norm = eigenvectors[:, 0]
+        self.icov = np.linalg.inv(cov) # from ndt
 
     def set_points(self, points):
         self.num = points.shape[0]
@@ -60,6 +61,7 @@ class VoxelGrid:
         return keys
 
     def add_points(self, points):
+        points = points.astype(np.float32)  # Ensure type is float32
         # Compute keys for all points
         keys = self.get_keys(points, self.voxel_size)
         # Find unique keys and their indices
@@ -74,10 +76,10 @@ class VoxelGrid:
             self.voxels[key].add_points(pts)
             voxel_points.append(self.voxels[key].mean)
             self.voxel_keys.append(key)
-        self.kdtree = cKDTree(np.array(voxel_points))
+        self.kdtree = KDTree(np.array(voxel_points, dtype=np.float32))  # Ensure KDTree uses float32
 
     def find(self, point):
-        # usd kdtree to find the nearest cell
+        # Use kdtree to find the nearest cell
         _, idx = self.kdtree.query(point)
         key = list(self.voxels.keys())[idx]
         return self.voxels[key]

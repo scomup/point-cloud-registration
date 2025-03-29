@@ -9,6 +9,13 @@ import numpy as np
 epsilon = 1e-5
 
 
+def huber_weight(r, d=1.0):
+    weights = np.ones_like(r)
+    mask = r > d
+    weights[mask] = d / r[mask]
+    return weights
+
+
 def skews(vectors):
     # Efficiently compute skew-symmetric matrices for a batch of vectors
     x, y, z = vectors[:, 0], vectors[:, 1], vectors[:, 2]
@@ -38,7 +45,6 @@ def makeRt(T):
     return T[0:n, 0:n], T[0:n, n]
 
 
-
 def expSO3(omega):
     """
     Exponential map of SO3
@@ -58,6 +64,21 @@ def expSO3(omega):
         one_minus_cos = 1 - np.cos(theta)
         R = np.eye(3) + sin_theta * K + one_minus_cos * KK  # rotation.md (10)
         return R
+
+
+def plus(T, dx):
+    """
+    define the boxplus operator on SE(3)
+    """
+    dR = expSO3(dx[3:])
+    dt = dx[:3]
+    dT = makeT(dR, dt)
+    return T @ dT
+
+
+def transform_points(T, points):
+    R, t = makeRt(T)
+    return (R @ points.T).T + t
 
 
 def numerical_derivative(func, param, idx, plus=lambda a, b: a + b, minus=lambda a, b: a - b, delta=1e-5):

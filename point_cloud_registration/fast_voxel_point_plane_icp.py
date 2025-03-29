@@ -2,7 +2,7 @@ import numpy as np
 import q3dviewer as q3d
 from voxel import VoxelGrid
 from caratheodory import fast_caratheodory, create_gn_set
-from voxel_point_plane_icp import skews
+from point_cloud_registration.voxelized_point_plane_icp import skews
 from math_tools import makeRt, expSO3, makeT
 
 
