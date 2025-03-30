@@ -4,17 +4,29 @@ from point_cloud_registration.kdtree import KDTree
 from operator import itemgetter, attrgetter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+
+def svd_sqrt(A):
+    U, S, Vt = np.linalg.svd(A)  # SVD decomposition
+    S_sqrt = np.sqrt(S)          # Square root of singular values
+    B = np.diag(S_sqrt) @ Vt     # Compute B
+    return B
+
+
 class VoxelCell:
     """
     Store the normal distribution information of a voxel cell,
     used for Normal Distributions Transform and Point-to-Plane ICP.
     """
     def __init__(self):
+        self.reset()
+    
+    def reset(self):
         self.num = 0
         self.sum = np.zeros(3)
         self.ppt = np.zeros([3, 3])
         self.mean = np.zeros(3)
-        self.icov = np.zeros([3, 3]) # inverse covariance
+        self.icov = np.zeros([3, 3])
+        self.sqrt_icov = np.zeros([3, 3])
         self.norm = np.zeros(3)
 
     def add_points(self, points):
@@ -26,17 +38,13 @@ class VoxelCell:
             self.num + np.outer(self.mean, self.mean)
         _, eigenvectors = np.linalg.eigh(cov)
         self.norm = eigenvectors[:, 0]
-        self.icov = np.linalg.inv(cov) # from ndt
+        self.icov = np.linalg.inv(cov)
+        self.sqrt_icov = svd_sqrt(self.icov) # from ndt
+        pass
 
     def set_points(self, points):
-        self.num = points.shape[0]
-        self.sum = np.sum(points, axis=0)
-        self.ppt = np.dot(points.T, points)
-        self.mean = self.sum / self.num
-        self.cov = (self.ppt - 2 * np.outer(self.sum, self.mean)) / \
-            self.num + np.outer(self.mean, self.mean)
-        _, eigenvectors = np.linalg.eigh(self.cov)
-        self.norm = eigenvectors[:, 0]
+        self.reset()
+        self.add_points(points)
 
 
 class VoxelGrid:
@@ -74,28 +82,24 @@ class VoxelGrid:
         sorted_keys = keys[idx]
         sorted_unique_indices = unique_indices[idx]
 
-        voxel_points = []
-        self.voxel_keys = []
-
         # Find the start and end indices of points in each voxel using prefix sum
         prefix_sum = np.cumsum(np.r_[0, np.diff(sorted_unique_indices) != 0])
         ranges = np.where(prefix_sum[:-1] != prefix_sum[1:])[0] + 1
         ranges = np.r_[0, ranges, len(sorted_points)]  # Add first & last indices
 
-        # Process each group
+        # Add points to each voxel
         for i in range(len(ranges) - 1):
             start, end = ranges[i], ranges[i + 1]
             group_points = sorted_points[start:end]
-
             if len(group_points) >= 4:  # Only process groups with >= 4 points
                 key = sorted_keys[start]
                 self.voxels[key].add_points(group_points)
-                voxel_points.append(self.voxels[key].mean)
-                self.voxel_keys.append(key)
 
-        # Build KDTree using voxel means
-        self.kdtree = KDTree(np.array(voxel_points, dtype=np.float32))  # Ensure KDTree uses float32
-    
+        # Build KDTree using voxel means, for fast nearest neighbor search
+        self.voxel_keys, voxel_points = zip(
+            *[(key, self.voxels[key].mean) for key in self.voxels])
+        self.kdtree = KDTree(np.array(voxel_points, dtype=np.float32))
+
 
     def find(self, point):
         # Use kdtree to find the nearest cell

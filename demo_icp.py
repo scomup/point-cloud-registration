@@ -1,5 +1,6 @@
 from point_cloud_registration import VoxelizedPoint2PlaneICP
 from point_cloud_registration import ICP
+from point_cloud_registration import NDT
 
 from point_cloud_registration.math_tools import makeRt, expSO3, transform_points, makeT
 import numpy as np
@@ -15,10 +16,11 @@ if __name__ == '__main__':
     # Generate N x 3 points
     map, _ = q3d.load_pcd("/home/liu/tmp/recorded_frames/clouds/0.pcd")
 
-    T = makeT(expSO3(np.array([0.0, 0.0, 0.0])), np.array([0.3, 0.0, 0.0]))
-    scan = transform_points(T, map['xyz'])
-    # scan, _ = q3d.load_pcd("/home/liu/tmp/recorded_frames/clouds/2.pcd")
+    # T = makeT(expSO3(np.array([0.0, 0.0, 0.0])), np.array([0.3, 0.0, 0.0]))
+    # scan = transform_points(T, map['xyz'])
+    scan, _ = q3d.load_pcd("/home/liu/tmp/recorded_frames/clouds/2.pcd")
     map = map['xyz']
+    scan = scan['xyz']
 
     
     T = np.eye(4)
@@ -28,11 +30,11 @@ if __name__ == '__main__':
     #               [0.,  0.,  0.,  1.]])
 
     # T = np.eye(4)
-    icp = ICP(max_iter=100, max_dist=2, tol=1e-5)
+    icp = NDT(voxel_size=1, max_iter=100, max_dist=100, tol=1e-5)
     icp.set_target(map)
     T_new = icp.fit(scan, init_T=T, verbose=True)
-    icp.max_dist = 0.1
-    T_new = icp.fit(scan, init_T=T_new, verbose=True)
+    # icp.max_dist = 0.1
+    # T_new = icp.fit(scan, init_T=T_new, verbose=True)
     R_new, t_new = makeRt(T_new)
 
     scan_new = transform_points(T_new, scan)

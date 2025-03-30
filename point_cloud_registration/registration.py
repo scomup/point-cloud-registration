@@ -39,6 +39,21 @@ class Registration:
         :return: Jacobian (Nx6 array), residual (Nx3 array), weights (N array).
         """
         raise NotImplementedError("linearize is not implemented.")
+    
+    def calc_H_g_e2(self, cur_T, source):
+        """
+        Compute the Hessian, gradient, and squared error.
+        :param cur_T: Current transformation (4x4 array).
+        source: Source point cloud (Nx3 array).
+        :return: Hessian (6x6 array), gradient (6 array), squared error (scalar).
+        """
+        Js, rs, weights = self.linearize(cur_T, source)
+        # use einsum to parallelize the computation
+        JsT = Js.transpose(0, 2, 1)
+        H = np.einsum('nij,njk,n->ik', JsT, Js, weights)
+        g = np.einsum('nij,nj,n->i', JsT, rs, weights)
+        e2 = np.einsum('ni,ni,n->', rs, rs, weights)
+        return H, g, e2
 
 
     def fit(self, source, init_T=np.eye(4), verbose=False):
@@ -51,34 +66,20 @@ class Registration:
         :return: Final transformation (4x4 array).
         """
         cur_T = init_T
-        best_T = cur_T
-        best_error = np.inf
+        # best_T = cur_T
+        # best_error = np.inf
         for i in range(self.max_iter):
-            Js, rs, weights = self.linearize(cur_T, source)
-            # Gauss-Newton step
-            """
-            Js, rs and weights is [N, M, 6], [N, M], [N] array respectively
-            where N is the number of points, M is the dimension of the residual
-            6: 3 for SO(3), 3 for translation
-            H = sum (Js[i].T @ Js[i] * weights[i])
-            g = sum (Js[i].T @ rs[i] * weights[i])
-            e2 = sum (rs[i] * rs[i] * weights[i])
-            """
-            # use einsum to parallelize the computation
-            JsT = Js.transpose(0, 2, 1)
-            H = np.einsum('nij,njk,n->ik', JsT, Js, weights)
-            g = np.einsum('nij,nj,n->i', JsT, rs, weights)
-            e2 = np.einsum('ni,ni,n->', rs, rs, weights)
-
-            # ensure the error is decreasing
-            if e2 < best_error:
-                best_error = e2
-                best_T = cur_T.copy()
-            else:
-                break
-
+            H, g, e2 = self.calc_H_g_e2(cur_T, source)
             if verbose:
                 print(f"iter {i}, error {e2}")
+
+            # # ensure the error is decreasing
+            # if e2 < best_error:
+            #     best_error = e2
+            #     best_T = cur_T.copy()
+            # else:
+            #     break
+
             
             # solve the linear system
             dx = -np.linalg.solve(H, g)
@@ -90,4 +91,4 @@ class Registration:
             # Update transformation
             cur_T = plus(cur_T, dx)
 
-        return best_T
+        return cur_T

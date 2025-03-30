@@ -1,4 +1,3 @@
-
 # Point Cloud Registration  
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -12,6 +11,7 @@ It outperforms Open3D’s registration in speed while relying **only on NumPy** 
 ✅ **Fast & Lightweight** – Optimized algorithms with minimal overhead  
 ✅ **NumPy-based API** – Seamless integration with scientific computing workflows  
 
+The following registration algorithms are planned to be supported:
 
 ### Comparison of Registration Methods
 
@@ -25,6 +25,19 @@ It outperforms Open3D’s registration in speed while relying **only on NumPy** 
 
 ---
 
+### Speed Comparison Table
+
+| Method                        | Points Size | Our Implementation (Time in seconds) | Open3D (Time in seconds) |
+|-------------------------------|--------------|---------------------------------------|---------------------------|
+| Point-to-Point ICP            | 400,000       | 16                                 | 61                     |
+| Point-to-Plane ICP            | 400,000       | TODO                                 | TODO                     |
+| Voxelized Point-to-Plane ICP  | 400,000       | 2.9                                 | N/A                      |
+| Normal Distributions Transform (NDT) | 400,000 | 10                                 | N/A                     |
+
+---
+
+**Note**: The above times are based on synthetic datasets and may vary depending on hardware and dataset characteristics.
+
 **For more details, check the documentation.*
 
 
@@ -34,6 +47,8 @@ Install via pip:
 
 ```bash
 pip install point-cloud-registration
+pip install q3dviewer # (optional) for visual demo
+pip install pykdtree # (optional) for fast kdtree
 ```
 
 ## Usage  
@@ -59,9 +74,9 @@ print("Estimated Transform matrix:\n", T_new)
 - [x] **Point-to-Point ICP** – Basic ICP implementation  
 - [ ] **Point-to-Plane ICP** – Improved accuracy using normal constraints  
 - [ ] **Generalized ICP (GICP)** – Handles anisotropic noise and improves robustness  
-- [ ] **Normal Distributions Transform (NDT)** – Grid-based registration for high-noise environments  
+- [x] **Normal Distributions Transform (NDT)** – Grid-based registration for high-noise environments  
 - [ ] **Further optimizations** while staying pure Python  
 
 ## License  
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.  
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

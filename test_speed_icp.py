@@ -1,10 +1,9 @@
 import numpy as np
 import time
 from point_cloud_registration.icp import ICP
-from point_cloud_registration.voxelized_point_plane_icp import VoxelizedPoint2PlaneICP
 import open3d as o3d
-import q3dviewer as q3d
 from point_cloud_registration.math_tools import expSO3
+import q3dviewer as q3d
 
 
 def generate_test_data():
@@ -47,16 +46,6 @@ def test_open3d_icp(map_points, scan_points, max_iter, tol, max_dist):
     return result.transformation, elapsed_time
 
 
-def test_vppicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size):
-    start_time = time.time()
-    icp = VoxelizedPoint2PlaneICP(
-        voxel_size=voxel_size, max_iter=max_iter, max_dist=max_dist, tol=tol)
-    icp.set_target(map_points)
-    T_new = icp.fit(scan_points, init_T=np.eye(4))
-    elapsed_time = time.time() - start_time
-    return T_new, elapsed_time
-
-
 if __name__ == '__main__':
     map_points, scan_points = generate_test_data()
 
@@ -69,15 +58,8 @@ if __name__ == '__main__':
     T_icp, time_icp = test_icp(
         map_points, scan_points, max_iter, tol, max_dist)
     print(
-        f"Point2PointICP: Time = {time_icp:.4f}s, Transformation:\n{T_icp}")
+        f"our ICP: Time = {time_icp:.4f}s, Transformation:\n{T_icp}")
 
-    # Test VoxelizedPoint2PlaneICP
-    voxel_size = 0.5
-    T_vppicp, time_vppicp = test_vppicp(
-        map_points, scan_points, max_iter, tol, max_dist, voxel_size)
-
-    print(
-        f"VoxelizedPoint2PlaneICP: Time = {time_vppicp:.4f}s, Transformation:\n{T_vppicp}")
 
     # Test Open3D ICP
     T_open3d, time_open3d = test_open3d_icp(
