@@ -48,7 +48,6 @@ Install via pip:
 ```bash
 pip install point-cloud-registration
 pip install q3dviewer # (optional) for visual demo
-pip install pykdtree # (optional) for fast kdtree
 ```
 
 ## Usage  

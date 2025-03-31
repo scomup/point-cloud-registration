@@ -40,7 +40,7 @@ class FastVoxelPoint2PlaneICP:
             w = np.ones(source.shape[0])
             return Js, rs, w
 
-    def fit(self, source, init_T=np.eye(4)):
+    def align(self, source, init_T=np.eye(4)):
         cur_T = init_T.copy()
         using_coreset = False
         Js = None
@@ -95,7 +95,7 @@ if __name__ == '__main__':
 
     icp = FastVoxelPoint2PlaneICP(0.5, N_target=2000)
     icp.update_target(map)
-    T_new = icp.fit(scan, init_T=np.eye(4))
+    T_new = icp.align(scan, init_T=np.eye(4))
     R_new, t_new = makeRt(T_new)
     scan_new = (R_new @ scan.T).T + t_new
 

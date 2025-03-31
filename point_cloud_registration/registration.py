@@ -56,7 +56,7 @@ class Registration:
         return H, g, e2
 
 
-    def fit(self, source, init_T=np.eye(4), verbose=False):
+    def align(self, source, init_T=np.eye(4), verbose=False):
         """
         use Gauss-Newton method to find the transformation 
         that aligns the source point cloud to the target point cloud.

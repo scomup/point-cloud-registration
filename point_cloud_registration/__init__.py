@@ -1,8 +1,10 @@
-from point_cloud_registration.caratheodory import fast_caratheodory, create_gn_set
-from point_cloud_registration.voxelized_point_plane_icp import VoxelizedPoint2PlaneICP
-from point_cloud_registration.icp import ICP
-from point_cloud_registration.kdtree import KDTree
 from point_cloud_registration.registration import Registration
-from point_cloud_registration.voxel import VoxelGrid
 from point_cloud_registration.math_tools import makeRt, expSO3, makeT, skews, huber_weight, plus, transform_points
+from point_cloud_registration.voxelized_point_plane_icp import VoxelizedPoint2PlaneICP
+from point_cloud_registration.point_plane_icp import Point2PlaneICP
+from point_cloud_registration.icp import ICP
 from point_cloud_registration.ndt import NDT
+from point_cloud_registration.kdtree import KDTree
+from point_cloud_registration.voxel import VoxelGrid, voxel_filter
+from point_cloud_registration.estimate_normals import estimate_normals, get_norm_lines
+from point_cloud_registration.caratheodory import fast_caratheodory, create_gn_set

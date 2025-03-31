@@ -7,13 +7,14 @@ class ICP(Registration):
     def __init__(self, max_iter=100, max_dist=2, tol=1e-6):
         super().__init__(max_iter=max_iter, tol=tol)
         self.max_dist = max_dist
+        self.kdtree = None
 
     def set_target(self, target):
         self.kdtree = KDTree(target)
         self.target = target
 
     def linearize(self, cur_T, source):
-            if self.target is None:
+            if self.kdtree is None:
                 raise ValueError("Target is not set.")
             src_trans = transform_points(cur_T, source)
             _, idx = self.kdtree.query(src_trans.astype(np.float32))

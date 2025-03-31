@@ -12,6 +12,18 @@ def svd_sqrt(A):
     return B
 
 
+def get_keys(points, voxel_size=1):
+    """
+    a faster hash for 3d points
+    """
+    # voxel_indices = (points // voxel_size).astype(np.int64)
+    voxel_indices = (points // voxel_size).astype(np.int64)
+    P1 = 2654435761  # Large prime (from Knuth)
+    P2 = 5915587277  # Another large prime
+    # Fast hash computation using multiply-shift-xor
+    keys = (voxel_indices[:,0] * P1) ^ (voxel_indices[:,1] * P2) ^ voxel_indices[:,2]
+    return keys
+
 class VoxelCell:
     """
     Store the normal distribution information of a voxel cell,
@@ -56,22 +68,10 @@ class VoxelGrid:
         self.voxels = defaultdict(VoxelCell)
         self.kdtree = None
         self.voxel_keys = None
-
-    @ staticmethod
-    def get_keys(points, voxel_size=1):
-        """
-        a faster hash for 3d points
-        """
-        voxel_indices = (points // voxel_size).astype(np.int64)
-        P1 = 2654435761  # Large prime (from Knuth)
-        P2 = 5915587277  # Another large prime
-        # Fast hash computation using multiply-shift-xor
-        keys = (voxel_indices[:,0] * P1) ^ (voxel_indices[:,1] * P2) ^ voxel_indices[:,2]
-        return keys
     
     def add_points(self, points):
         points = points.astype(np.float32)  # Ensure type is float32
-        keys = self.get_keys(points, self.voxel_size)
+        keys = get_keys(points, self.voxel_size)
 
         # The points in the same voxel will have the same key
         _, unique_indices = np.unique(keys, return_inverse=True)
@@ -126,7 +126,7 @@ def color_by_voxel(points, voxel_size):
     """
     given a set of points, color them based on the voxel they belong to
     """
-    keys = VoxelGrid.get_keys(points, voxel_size)
+    keys = get_keys(points, voxel_size)
     # Create random colors for unique keys
     unique_keys = np.unique(keys)
     np.random.seed(42)  # Set seed for reproducibility
@@ -141,52 +141,59 @@ def color_by_voxel(points, voxel_size):
     return point_colors
 
 
-if __name__ == '__main__':
 
-    # Generate N x 3 points
-    map, _ = q3d.load_pcd("/home/liu/tmp/recorded_frames/clouds/0.pcd")
-
-    T = makeT(expSO3(np.array([0.0, 0.0, 0.0])), np.array([0.3, 0.0, 0.0]))
-    scan = transform_points(T, map['xyz'])
-    # scan, _ = q3d.load_pcd("/home/liu/tmp/recorded_frames/clouds/2.pcd")
-    map = map['xyz']
-
+def voxel_filter_old(points, voxel_size):
+    """
+    original voxel filter for point clouds
+    please do not use this function
+    """
     
-    T = np.eye(4)
-    # T = np.array([[0.91724685,  0.39554969, -0.04691057, -0.01918991],
-    #               [-0.39801572,  0.90555297, -0.14683008, -0.02283431],
-    #               [-0.01559759,  0.15334987,  0.98804928, -0.00580279],
-    #               [0.,  0.,  0.,  1.]])
+    keys = get_keys(points, voxel_size)
+    # The points in the same voxel will have the same key
+    _, unique_indices = np.unique(keys, return_inverse=True)
 
-    # T = np.eye(4)
-    icp = ICP(max_iter=100, max_dist=2, tol=1e-5)
-    icp.set_target(map)
-    T_new = icp.fit(scan, init_T=T, verbose=True)
-    icp.max_dist = 0.1
-    T_new = icp.fit(scan, init_T=T_new, verbose=True)
-    R_new, t_new = makeRt(T_new)
+    # Sort by unique_indices, points in same voxel are grouped together
+    idx = np.argsort(unique_indices)
+    sorted_points = points[idx]
+    sorted_unique_indices = unique_indices[idx]
 
-    scan_new = transform_points(T_new, scan)
+    # Find the start and end indices of points in each voxel using prefix sum
+    prefix_sum = np.cumsum(np.r_[0, np.diff(sorted_unique_indices) != 0])
+    ranges = np.where(prefix_sum[:-1] != prefix_sum[1:])[0] + 1
+    ranges = np.r_[0, ranges, len(sorted_points)]  # Add first & last indices
+    # Add points to each voxel
+    filtered_points = []
+    for i in range(len(ranges) - 1):
+        start, end = ranges[i], ranges[i + 1]
+        group_points = sorted_points[start:end]
+        filtered_points.append(group_points.mean(axis=0))
+    return np.array(filtered_points, dtype=np.float32)
 
-    print(T_new)
-    # scan_new = (R_new @ scan.T).T + t_new
 
-    app = q3d.QApplication([])
 
-    # create viewer
-    viewer = q3d.Viewer(name='example')
-    # add all items to viewer
-    viewer.add_items({
-        'grid': q3d.GridItem(size=10, spacing=1),
-        'map': q3d.CloudItem(size=0.01, alpha=0.5, point_type='SPHERE', \
-                              color_mode='FLAT', color='#00ff00', depth_test=True),
-        'scan': q3d.CloudItem(size=0.01, alpha=0.5, point_type='SPHERE', \
-                              color_mode='FLAT', color='#ff0000', depth_test=True),
-        'norm': q3d.LineItem(width=2, color='#00ff00', line_type='LINES')})
+def voxel_filter(points, voxel_size):
+    """
+    Fast voxel filter for point clouds using hash table
+    
+    Parameters:
+    - points (np.ndarray): Input point cloud of shape (N, 3).
+    - voxel_size (float): Size of each voxel grid.
+    
+    Returns:
+    - np.ndarray: Filtered point cloud of shape (M, 3), where M <= N.
+    """
+    keys = get_keys(points, voxel_size)
+    _, inverse_indices = np.unique(keys, return_inverse=True)
+    summed_x = np.bincount(inverse_indices, weights=points[:, 0])
+    summed_y = np.bincount(inverse_indices, weights=points[:, 1])
+    summed_z = np.bincount(inverse_indices, weights=points[:, 2])
+    counts = np.bincount(inverse_indices).astype(np.float32)[:, np.newaxis]
+    counts[counts == 0] = 1
+    filtered_x = summed_x / counts[:, 0]
+    filtered_y = summed_y / counts[:, 0]
+    filtered_z = summed_z / counts[:, 0]
+    filtered_points = np.stack(
+        (filtered_x, filtered_y, filtered_z), axis=1).astype(np.float32)
+    return filtered_points
 
-    viewer['map'].set_data(map)
-    viewer['scan'].set_data(scan_new)
-
-    viewer.show()
-    app.exec()
 

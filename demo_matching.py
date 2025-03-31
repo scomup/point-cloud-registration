@@ -32,9 +32,9 @@ if __name__ == '__main__':
     # T = np.eye(4)
     icp = NDT(voxel_size=1, max_iter=100, max_dist=100, tol=1e-5)
     icp.set_target(map)
-    T_new = icp.fit(scan, init_T=T, verbose=True)
+    T_new = icp.align(scan, init_T=T, verbose=True)
     # icp.max_dist = 0.1
-    # T_new = icp.fit(scan, init_T=T_new, verbose=True)
+    # T_new = icp.align(scan, init_T=T_new, verbose=True)
     R_new, t_new = makeRt(T_new)
 
     scan_new = transform_points(T_new, scan)
