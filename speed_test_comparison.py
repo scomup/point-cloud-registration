@@ -122,6 +122,7 @@ if __name__ == '__main__':
     print(f"{'Algorithm':<25}{'Execution Time (s)':>20}")
     print("-" * 45)
     print(f"{'Our ICP':<25}{time_icp:>20.6f}")
+    print(f"{'Our Voxelized Point-to-Plane ICP':<25}{time_vppicp:>20.6f}")
     print(f"{'Our Point-to-Plane ICP':<25}{time_ppicp:>20.6f}")
     print(f"{'Our NDT':<25}{time_ndt:>20.6f}")
     print(f"{'Open3D ICP':<25}{time_open3d_icp:>20.6f}")
