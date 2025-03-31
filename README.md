@@ -11,32 +11,20 @@ It outperforms Open3D’s registration in speed while relying **only on NumPy** 
 ✅ **Fast & Lightweight** – Optimized algorithms with minimal overhead  
 ✅ **NumPy-based API** – Seamless integration with scientific computing workflows  
 
-The following registration algorithms are planned to be supported:
+The following registration algorithms are supported, with our implementation being **significantly faster** than PCL (C++) and Open3D (Python).
 
-### Comparison of Registration Methods
+### Current support algorithm and Speed Comparison
 
-| Method                        | Objective Function*                                         | Data Representation   | Speed         | Precision    |
-|-------------------------------|-----------------------------------------------------------|------------------------|---------------|--------------|
-| Point-to-Point ICP         | $\sum \| T p_i - q_i \|^2$   | Point-Based            | Fast          | Moderate     |
-| Point-to-Plane ICP         | $\sum \| n_i^T (T p_i - q_i) \|^2 $ | Point-Based (with normals) | Fast | High | 
-| Voxelized Point-to-Plane ICP         | $\sum \| n_i^T (T p_i - q_i) \|^2 $ | Voxel-Based (with normals) | Very Fast | High | 
-| Generalized ICP (GICP)     | $\sum (T p_i - q_i)^T (C_i^Q + R C_i^P R^T)^{-1} (T p_i - q_i)$ | Point-Based (with covariances) | Moderate | Very High | 
-| Normal Distributions Transform (NDT) | $\sum (T p_i - \mu_i)^T \Sigma_i^{-1} (T p_i - \mu_i)$ | Voxel-Based (with covariances) | Very Fast | Moderate |
-
----
-
-### Speed Comparison Table
-
-| Method                        | Points Size | Our Implementation (Time in seconds) | Open3D (Time in seconds) |
-|-------------------------------|--------------|---------------------------------------|---------------------------|
-| Point-to-Point ICP            | 400,000       | 16                                 | 61                     |
-| Point-to-Plane ICP            | 400,000       | TODO                                 | TODO                     |
-| Voxelized Point-to-Plane ICP  | 400,000       | 2.9                                 | N/A                      |
-| Normal Distributions Transform (NDT) | 400,000 | 10                                 | N/A                     |
+| Method                         | Our (sec) | Open3D (sec) | PCL (sec) |
+|-------------------------------|-----------|--------------|-----------|
+| Point-to-Point ICP               | 16.35     | 21.76        | 16.22     |
+| Point-to-Plane ICP               | 5.55      | 25.71        | 60.00     |
+| Voxelized Point-to-Plane ICP     | 3.48      | N/A          | N/A       |
+| Normal Distributions Transform | 9.32         | N/A          | 37.51     |
 
 ---
 
-**Note**: The above times are based on synthetic datasets and may vary depending on hardware and dataset characteristics.
+**Note**: The above times are based on a dataset with 400,000 points. The speed varies depending on hardware and dataset characteristics.
 
 **For more details, check the documentation.*
 
@@ -75,6 +63,18 @@ print("Estimated Transform matrix:\n", T_new)
 - [ ] **Generalized ICP (GICP)** – Handles anisotropic noise and improves robustness  
 - [x] **Normal Distributions Transform (NDT)** – Grid-based registration for high-noise environments  
 - [ ] **Further optimizations** while staying pure Python  
+
+### Comparison of Registration Methods
+
+| Method                        | Objective Function*                                         | Data Representation   | Speed         | Precision    |
+|-------------------------------|-----------------------------------------------------------|------------------------|---------------|--------------|
+| Point-to-Point ICP         | $\sum \| T p_i - q_i \|^2$   | Point-Based            | Fast          | Moderate     |
+| Point-to-Plane ICP         | $\sum \| n_i^T (T p_i - q_i) \|^2 $ | Point-Based (with normals) | Fast | High | 
+| Voxelized Point-to-Plane ICP         | $\sum \| n_i^T (T p_i - q_i) \|^2 $ | Voxel-Based (with normals) | Very Fast | High | 
+| Generalized ICP (GICP)     | $\sum (T p_i - q_i)^T (C_i^Q + R C_i^P R^T)^{-1} (T p_i - q_i)$ | Point-Based (with covariances) | Moderate | Very High | 
+| Normal Distributions Transform (NDT) | $\sum (T p_i - \mu_i)^T \Sigma_i^{-1} (T p_i - \mu_i)$ | Voxel-Based (with covariances) | Very Fast | Moderate |
+
+---
 
 ## License  
 
