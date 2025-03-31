@@ -20,7 +20,7 @@ The following registration algorithms are supported, with our implementation bei
 | Point-to-Point ICP               | 16.35     | 21.76        | 16.22     |
 | Point-to-Plane ICP               | 5.55      | 25.71        | 60.00     |
 | Voxelized Point-to-Plane ICP     | 3.48      | N/A          | N/A       |
-| Normal Distributions Transform | 9.32         | N/A          | 37.51     |
+| Normal Distributions Transform (NDT) | 9.32         | N/A          | 37.51     |
 
 ---
 
@@ -59,7 +59,7 @@ print("Estimated Transform matrix:\n", T_new)
 ## Roadmap  
 🚀 **Upcoming Features & Enhancements**:  
 - [x] **Point-to-Point ICP** – Basic ICP implementation  
-- [ ] **Point-to-Plane ICP** – Improved accuracy using normal constraints  
+- [x] **Point-to-Plane ICP** – Improved accuracy using normal constraints  
 - [ ] **Generalized ICP (GICP)** – Handles anisotropic noise and improves robustness  
 - [x] **Normal Distributions Transform (NDT)** – Grid-based registration for high-noise environments  
 - [ ] **Further optimizations** while staying pure Python  

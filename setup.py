@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='point-cloud-registration',
-    version='1.0.1',
+    version='1.0.2',
     author="Liu Yang",
     description="A pure python point cloud registration library.",
     long_description=open("README.md").read(),
