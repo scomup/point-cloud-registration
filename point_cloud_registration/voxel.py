@@ -182,8 +182,12 @@ def voxel_filter(points, voxel_size):
     Returns:
     - np.ndarray: Filtered point cloud of shape (M, 3), where M <= N.
     """
+    import time
+    t1 = time.time()
     keys = get_keys(points, voxel_size)
+    t2 = time.time()
     _, inverse_indices = np.unique(keys, return_inverse=True)
+    t3 = time.time()
     summed_x = np.bincount(inverse_indices, weights=points[:, 0])
     summed_y = np.bincount(inverse_indices, weights=points[:, 1])
     summed_z = np.bincount(inverse_indices, weights=points[:, 2])
@@ -194,6 +198,11 @@ def voxel_filter(points, voxel_size):
     filtered_z = summed_z / counts[:, 0]
     filtered_points = np.stack(
         (filtered_x, filtered_y, filtered_z), axis=1).astype(np.float32)
+    t4 = time.time()
+    # print(f"Time taken for key generation: {t2 - t1:.6f} seconds")
+    # print(f"Time taken for unique indices: {t3 - t2:.6f} seconds")
+    # print(f"Time taken for voxel filtering: {t4 - t3:.6f} seconds")
+    # print(f"Total time taken: {t4 - t1:.6f} seconds")
     return filtered_points
 
 

@@ -40,7 +40,7 @@ def test_open3d_voxel_filter(voxel_size, points):
 if __name__ == '__main__':
     map_points = generate_test_data()
 
-    voxel_size = 0.25  # Adjust voxel size as needed
+    voxel_size = 0.5
 
     t1, our_filtered = test_voxel_filter(voxel_size, map_points)
 

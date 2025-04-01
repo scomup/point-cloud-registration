@@ -4,8 +4,11 @@
 #include <pcl/registration/ndt.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/filters/voxel_grid.h>
 #include <Eigen/Dense>
 #include <iostream>
+#include <chrono>
+#include <iomanip>
 
 Eigen::Matrix3f expSO3(const Eigen::Vector3f& w) {
     // Compute the exponential map for SO(3) (rotation matrix)
@@ -38,8 +41,8 @@ pcl::PointCloud<pcl::PointNormal>::Ptr compute_normals(const pcl::PointCloud<pcl
 }
 
 void test_icp(const pcl::PointCloud<pcl::PointXYZ>::Ptr& map_cloud,
-              const pcl::PointCloud<pcl::PointXYZ>::Ptr& scan_cloud) {
-    std::cout << "\nTesting Point-to-Point ICP..." << std::endl;
+              const pcl::PointCloud<pcl::PointXYZ>::Ptr& scan_cloud, double& elapsed_time) {
+    auto start = std::chrono::high_resolution_clock::now();
 
     pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
     icp.setInputSource(scan_cloud);
@@ -53,18 +56,19 @@ void test_icp(const pcl::PointCloud<pcl::PointXYZ>::Ptr& map_cloud,
     pcl::PointCloud<pcl::PointXYZ> aligned_cloud;
     icp.align(aligned_cloud);
 
+    auto end = std::chrono::high_resolution_clock::now();
+    elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+
     if (icp.hasConverged()) {
         std::cout << "Point-to-Point ICP converged. Fitness score: " << icp.getFitnessScore() << std::endl;
-        std::cout << "Transformation matrix:" << std::endl;
-        std::cout << icp.getFinalTransformation() << std::endl;
     } else {
         std::cerr << "Point-to-Point ICP did not converge." << std::endl;
     }
 }
 
 void test_point_to_plane_icp(const pcl::PointCloud<pcl::PointNormal>::Ptr& map_cloud_with_normals,
-                             const pcl::PointCloud<pcl::PointXYZ>::Ptr& scan_cloud) {
-    std::cout << "\nTesting Point-to-Plane ICP..." << std::endl;
+                             const pcl::PointCloud<pcl::PointXYZ>::Ptr& scan_cloud, double& elapsed_time) {
+    auto start = std::chrono::high_resolution_clock::now();
 
     // Convert scan cloud to PointNormal (normals are not used for the source cloud)
     pcl::PointCloud<pcl::PointNormal>::Ptr scan_cloud_with_normals(new pcl::PointCloud<pcl::PointNormal>());
@@ -82,18 +86,19 @@ void test_point_to_plane_icp(const pcl::PointCloud<pcl::PointNormal>::Ptr& map_c
     pcl::PointCloud<pcl::PointNormal> aligned_cloud;
     icp.align(aligned_cloud);
 
+    auto end = std::chrono::high_resolution_clock::now();
+    elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+
     if (icp.hasConverged()) {
         std::cout << "Point-to-Plane ICP converged. Fitness score: " << icp.getFitnessScore() << std::endl;
-        std::cout << "Transformation matrix:" << std::endl;
-        std::cout << icp.getFinalTransformation() << std::endl;
     } else {
         std::cerr << "Point-to-Plane ICP did not converge." << std::endl;
     }
 }
 
 void test_ndt(const pcl::PointCloud<pcl::PointXYZ>::Ptr& map_cloud,
-              const pcl::PointCloud<pcl::PointXYZ>::Ptr& scan_cloud) {
-    std::cout << "\nTesting NDT..." << std::endl;
+              const pcl::PointCloud<pcl::PointXYZ>::Ptr& scan_cloud, double& elapsed_time) {
+    auto start = std::chrono::high_resolution_clock::now();
 
     pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt;
     ndt.setInputSource(scan_cloud);
@@ -108,13 +113,49 @@ void test_ndt(const pcl::PointCloud<pcl::PointXYZ>::Ptr& map_cloud,
     pcl::PointCloud<pcl::PointXYZ> aligned_cloud;
     ndt.align(aligned_cloud);
 
+    auto end = std::chrono::high_resolution_clock::now();
+    elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+
     if (ndt.hasConverged()) {
         std::cout << "NDT converged. Fitness score: " << ndt.getFitnessScore() << std::endl;
-        std::cout << "Transformation matrix:" << std::endl;
-        std::cout << ndt.getFinalTransformation() << std::endl;
     } else {
         std::cerr << "NDT did not converge." << std::endl;
     }
+}
+
+double test_pcl_estimate_normals(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, int k) {
+    auto start = std::chrono::high_resolution_clock::now();
+
+    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
+    pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>());
+
+    ne.setInputCloud(cloud);
+    ne.setSearchMethod(tree);
+    ne.setKSearch(k);  // Use k nearest neighbors
+    ne.compute(*normals);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+}
+
+double test_pcl_voxel_filter(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, float voxel_size) {
+    std::cout << "\nTesting PCL Voxel Filter..." << std::endl;
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    pcl::VoxelGrid<pcl::PointXYZ> voxel_filter;
+    voxel_filter.setInputCloud(cloud);
+    voxel_filter.setLeafSize(voxel_size, voxel_size, voxel_size);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+    voxel_filter.filter(*filtered_cloud);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    double elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+    std::cout << "PCL Voxel Filter execution time: " << elapsed_time << " s" << std::endl;
+
+    return elapsed_time;
 }
 
 int main() {
@@ -144,38 +185,41 @@ int main() {
 
     // Compute normals for the map cloud
     pcl::PointCloud<pcl::PointNormal>::Ptr map_cloud_with_normals = compute_normals(map_cloud);
-    auto start = std::chrono::high_resolution_clock::now();
+
+    // Parameters (consistent with Python implementation)
+    int k = 15;  // Number of nearest neighbors for normal estimation
+    float voxel_size = 0.5f;  // Voxel size
+    int max_iter = 30;  // Maximum iterations for ICP and NDT
+    double tol = 1e-3;  // Tolerance for convergence
+    double max_dist = 2.0;  // Maximum correspondence distance
+
+    // Test PCL Normal Estimation
+    double pcl_normal_time = test_pcl_estimate_normals(map_cloud, k);
+
+    // Test PCL Voxel Filter
+    double pcl_voxel_time = test_pcl_voxel_filter(map_cloud, voxel_size);
 
     // Test NDT
-    test_ndt(map_cloud, scan_cloud);
-
-    auto ndt_end = std::chrono::high_resolution_clock::now();
-    std::cout << "NDT execution time: " 
-              << std::chrono::duration_cast<std::chrono::milliseconds>(ndt_end - start).count() 
-              << " ms" << std::endl;
+    double ndt_time;
+    test_ndt(map_cloud, scan_cloud, ndt_time);
 
     // Test Point-to-Point ICP
-    auto icp_start = std::chrono::high_resolution_clock::now();
-    test_icp(map_cloud, scan_cloud);
-
-    auto icp_end = std::chrono::high_resolution_clock::now();
-    std::cout << "Point-to-Point ICP execution time: " 
-              << std::chrono::duration_cast<std::chrono::milliseconds>(icp_end - icp_start).count() 
-              << " ms" << std::endl;
+    double icp_time;
+    test_icp(map_cloud, scan_cloud, icp_time);
 
     // Test Point-to-Plane ICP
-    auto plane_icp_start = std::chrono::high_resolution_clock::now();
-    test_point_to_plane_icp(map_cloud_with_normals, scan_cloud);
+    double plane_icp_time;
+    test_point_to_plane_icp(map_cloud_with_normals, scan_cloud, plane_icp_time);
 
-    auto plane_icp_end = std::chrono::high_resolution_clock::now();
-    std::cout << "Point-to-Plane ICP execution time: " 
-              << std::chrono::duration_cast<std::chrono::milliseconds>(plane_icp_end - plane_icp_start).count() 
-              << " ms" << std::endl;
-
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Total execution time: " 
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() 
-              << " ms" << std::endl;
+    // Output comparison table
+    std::cout << "\nSpeed Comparison Table:\n";
+    std::cout << std::left << std::setw(35) << "Algorithm" << std::right << std::setw(20) << "Execution Time (s)\n";
+    std::cout << std::string(55, '-') << "\n";
+    std::cout << std::left << std::setw(35) << "PCL Normal Estimation" << std::right << std::setw(20) << pcl_normal_time << "\n";
+    std::cout << std::left << std::setw(35) << "PCL Voxel Filter" << std::right << std::setw(20) << pcl_voxel_time << "\n";
+    std::cout << std::left << std::setw(35) << "NDT" << std::right << std::setw(20) << ndt_time << "\n";
+    std::cout << std::left << std::setw(35) << "Point-to-Point ICP" << std::right << std::setw(20) << icp_time << "\n";
+    std::cout << std::left << std::setw(35) << "Point-to-Plane ICP" << std::right << std::setw(20) << plane_icp_time << "\n";
 
     return 0;
 }

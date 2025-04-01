@@ -1,6 +1,6 @@
 import numpy as np
 from point_cloud_registration.math_tools import plus
-
+import time
 
 class Registration:
     def __init__(self, max_iter=100, tol=1e-6):
@@ -65,9 +65,11 @@ class Registration:
         :param verbose: Print error at each iteration.
         :return: Final transformation (4x4 array).
         """
+        source = source.astype(np.float32)
         cur_T = init_T
         # best_T = cur_T
         # best_error = np.inf
+        # source = source.astype(np.float32)
         for i in range(self.max_iter):
             H, g, e2 = self.calc_H_g_e2(cur_T, source)
             if verbose:

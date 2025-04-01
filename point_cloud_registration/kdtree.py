@@ -1,4 +1,5 @@
 try:
+    import numpy as np
     from pykdtree.kdtree import KDTree as PyKDTree
     KDTree = PyKDTree
     print("Using PyKDTree for KDTree implementation.")

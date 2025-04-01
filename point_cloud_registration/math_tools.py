@@ -26,6 +26,23 @@ def skews(vectors):
     return res
 
 
+def skew2(v):
+    """
+    Efficiently compute sum of skew(v).T @ skew(v)
+    """
+    x, y, z = v[:, 0], v[:, 1], v[:, 2]
+    z2 = np.sum(z * z)
+    y2 = np.sum(y * y)
+    x2 = np.sum(x * x)
+    xy = np.sum(x * y)
+    xz = np.sum(x * z)
+    yz = np.sum(y * z)
+    A = np.array([[z2 + y2, -xy, -xz],
+                  [-xy, x2 + z2, -yz],
+                  [-xz, -yz, x2 + y2]])
+    return A
+
+
 def skew(vector):
     return np.array([[0, -vector[2], vector[1]],
                      [vector[2], 0, -vector[0]],

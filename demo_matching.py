@@ -1,4 +1,4 @@
-from point_cloud_registration import VoxelizedPoint2PlaneICP
+from point_cloud_registration import VPlaneICP
 from point_cloud_registration import ICP
 from point_cloud_registration import NDT
 

@@ -4,7 +4,7 @@ from point_cloud_registration.voxel import VoxelGrid
 from point_cloud_registration.math_tools import makeRt, plus, skews, transform_points
 
 
-class VoxelizedPoint2PlaneICP(Registration):
+class VPlaneICP(Registration):
     def __init__(self, voxel_size=0.5, max_iter=100, max_dist=2, tol=1e-6):
         super().__init__(max_iter=max_iter, tol=tol)
         self.voxels = None

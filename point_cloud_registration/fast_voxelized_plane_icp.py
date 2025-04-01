@@ -2,11 +2,11 @@ import numpy as np
 import q3dviewer as q3d
 from voxel import VoxelGrid
 from caratheodory import fast_caratheodory, create_gn_set
-from point_cloud_registration.voxelized_point_plane_icp import skews
+from point_cloud_registration.voxelized_plane_icp import skews
 from math_tools import makeRt, expSO3, makeT
 
 
-class FastVoxelPoint2PlaneICP:
+class FastVPlaneICP:
     def __init__(self, voxel_size, max_iter=100, max_dist=2, tol=1e-6, N_target=1024, debug=True):
         self.num = 0
         self.voxels = VoxelGrid(voxel_size)
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     scan = scan['xyz']
 
 
-    icp = FastVoxelPoint2PlaneICP(0.5, N_target=2000)
+    icp = FastVPlaneICP(0.5, N_target=2000)
     icp.update_target(map)
     T_new = icp.align(scan, init_T=np.eye(4))
     R_new, t_new = makeRt(T_new)

@@ -1,7 +1,9 @@
 import numpy as np
 from point_cloud_registration.registration import Registration
-from point_cloud_registration.math_tools import skews, transform_points
+from point_cloud_registration.math_tools import skews, transform_points, skew2, skew
 from point_cloud_registration.kdtree import KDTree
+import time
+
 
 class ICP(Registration):
     def __init__(self, max_iter=100, max_dist=2, tol=1e-6):
@@ -10,35 +12,78 @@ class ICP(Registration):
         self.kdtree = None
 
     def set_target(self, target):
+        # target = target.astype(np.float32)
+        target = target.astype(np.float32)
         self.kdtree = KDTree(target)
         self.target = target
 
-    def linearize(self, cur_T, source):
-            if self.kdtree is None:
-                raise ValueError("Target is not set.")
-            src_trans = transform_points(cur_T, source)
-            _, idx = self.kdtree.query(src_trans.astype(np.float32))
-            idx = idx
-            Js = np.zeros([source.shape[0], 6])
-            # Find corresponding target points
-            qs = self.target[idx]
-            # Compute transformation
+    def calc_H_g_e2(self, cur_T, source):
+        """
+        Calculate the Hessian, gradient, and squared error.
+        This function is heavily optimized for speed.
+        :param cur_T: Current transformation (4x4 array).
+        :param source: Source point cloud (Nx3 array).
+        :return: Hessian (6x6 array), gradient (6 array), squared error (scalar).
+        """
+        if self.kdtree is None:
+            raise ValueError("Target is not set.")
 
-            num = src_trans.shape[0]
-            Js = np.zeros([num, 3, 6])
-            rs = np.zeros([num, 3])
+        src_trans = transform_points(cur_T.astype(np.float32), source)
+        dist, idx = self.kdtree.query(src_trans)
+        mask = dist < self.max_dist
+        src_trans = src_trans[mask]
+        num = src_trans.shape[0]
+        source_mask = source[mask]
+        qs = self.target[idx]
+        rs = src_trans - qs
+        R = cur_T[:3, :3]
+        S = skews(source_mask)
+        S_sum = skew(np.sum(source_mask, axis=0))
+        H_ll = num * np.eye(3)
+        H_lr = - R @ S_sum
+        H_rr = skew2(source_mask)
+        H = np.zeros((6, 6))
+        H[:3, :3] = H_ll
+        H[:3, 3:] = H_lr
+        H[3:, :3] = H_lr.T
+        H[3:, 3:] = H_rr
+        g0 = rs.sum(axis=0)
+        Rt_r = rs @ R.T
+        g1 = np.einsum('nij,ni->j', S, -Rt_r)
+        g = np.hstack([g0, g1])
+        e2 = np.sum(rs * rs)
+        return H, g, e2
 
-            # the residual of icp
-            rs = src_trans - qs
-
-            # the Jacobian of icp
-            R = cur_T[:3, :3]
-            Js[:, :, :3] = np.repeat(np.eye(3)[np.newaxis, :, :], num, axis=0)
-            Js[:, :, 3:] = -R @ skews(source)
-
-            weights = np.ones(num)
-            weights[np.linalg.norm(rs, axis=1) > self.max_dist] = 0
-            return Js, rs, weights
-
-
-
+    def calc_H_g_e2_no_parallel_ver(self, cur_T, source):
+        """
+        Note: This is a non-parallel version of calc_H_g_e2.
+        This function is just for helping to understand the algorithm.
+        """
+        if self.kdtree is None:
+            raise ValueError("Target is not set.")
+        src_trans = transform_points(cur_T, source)
+        dist, idx = self.kdtree.query(src_trans.astype(np.float32))
+        mask = dist < self.max_dist
+        src_trans = src_trans[mask]
+        num = src_trans.shape[0]
+        # Find corresponding target points
+        qs = self.target[idx]
+        R = cur_T[:3, :3]
+        H = np.zeros((6, 6))
+        g = np.zeros(6)
+        e2 = 0
+        for i in range(num):
+            J = np.zeros((3, 6))
+            # Jacobian of the transformation
+            J[:, :3] = np.eye(3)
+            # Jacobian of the rotation
+            J[:, 3:] = -R @ skew(source[i])
+            # residual
+            r = src_trans[i] - qs[i]
+            # Hessian
+            H += J.T @ J
+            # Gradient
+            g += J.T @ r
+            # Squared error
+            e2 += r @ r
+        return H, g, e2
