@@ -30,9 +30,9 @@ if __name__ == '__main__':
 
     normal_length = 0.1
     lines = []
-    for key, cell in voxels.voxels.items():
-            lines.append(cell.mean)
-            lines.append(cell.mean + cell.norm * normal_length)
+    for mean, norm in zip(voxels.means, voxels.norms):
+            lines.append(mean)
+            lines.append(mean + norm * normal_length)
     lines = np.array(lines)
     viewer['norm'].set_data(lines)
 
