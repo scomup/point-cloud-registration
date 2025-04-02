@@ -167,12 +167,13 @@ if __name__ == '__main__':
     max_dist = 2  # Maximum correspondence distance
     voxel_size = 0.5  # Voxel size
     k = 15  # Number of nearest neighbors for normal estimation
+    downsampling_resolution = 0.01
 
     # Test voxel filters
     print("voxel_filter...")
-    t1, our_filtered = test_voxel_filter(voxel_size, map_points)
+    t1, our_filtered = test_voxel_filter(downsampling_resolution, map_points)
     print("open3d_voxel_filter...")
-    t2, open3d_filtered = test_open3d_voxel_filter(voxel_size, map_points)
+    t2, open3d_filtered = test_open3d_voxel_filter(downsampling_resolution, map_points)
 
     print("\nSpeed Comparison Voxel Filter:")
     print(f"{'Algorithm':<35}{'Execution Time (s)':>20}")
@@ -180,17 +181,13 @@ if __name__ == '__main__':
     print(f"{'Our Voxel Filter':<35}{t1:>20.6f}")
     print(f"{'Open3D Voxel Filter':<35}{t2:>20.6f}")    
 
+    map_points = voxel_filter(map_points, downsampling_resolution)
+    scan_points = voxel_filter(scan_points, downsampling_resolution)
     # Test algorithms
     # Output comparison table
 
-    num_points = len(map_points)
-    print(f"\nNumber of points: {num_points}")
-    print("Note: we do not use the downsampled point cloud for registration!")
-    print(f"\nSpeed Comparison Registration Algorithms:")
-    print(f"{'Algorithm':<35}{'Execution Time (s)':>20}")
-    print("-" * 55)
-    
-
+    print("\nSpeed Comparison Small GICP:")
+    test_small_gicp(map_points, scan_points, max_iter, tol, max_dist, downsampling_resolution)
     _, time_icp = test_icp(map_points, scan_points, max_iter, tol, max_dist)
     print(f"{'Our ICP':<35}{time_icp:>20.6f}")
     _, time_ppicp = test_ppicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size)

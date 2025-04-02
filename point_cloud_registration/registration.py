@@ -23,11 +23,11 @@ class Registration:
 
     def update_target(self, target):
         """
-        Update the target point cloud. 
-        This method is useful to re-use the same target point cloud
+        Update the target map continuously.
+        It is very useful for saving time by avoiding rebuild the KDTree or 3D voxels.
+        But we do not plan to implement it currently.
         :param target: Target point cloud (Nx3 array).
         """
-        self.target = target
         raise NotImplementedError("update_target is not implemented.")
 
     def linearize(self, cur_T, source):
@@ -40,7 +40,7 @@ class Registration:
         """
         raise NotImplementedError("linearize is not implemented.")
     
-    def calc_H_g_e2(self, cur_T, source):
+    def calc_H_g_e2(self, cur_T, source, dx_norm=np.inf):
         """
         Compute the Hessian, gradient, and squared error.
         :param cur_T: Current transformation (4x4 array).
@@ -67,6 +67,7 @@ class Registration:
         """
         source = source.astype(np.float32)
         cur_T = init_T
+        # dx_norm = np.inf
         # best_T = cur_T
         # best_error = np.inf
         # source = source.astype(np.float32)
@@ -87,7 +88,8 @@ class Registration:
             dx = -np.linalg.solve(H, g)
     
             # check convergence
-            if np.linalg.norm(dx) < self.tol:
+            dx_norm = np.linalg.norm(dx)
+            if dx_norm < self.tol:
                 break
 
             # Update transformation

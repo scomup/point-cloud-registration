@@ -1,7 +1,8 @@
 import numpy as np
 import time
 import open3d as o3d
-from point_cloud_registration.estimate_normals import estimate_normals, get_norm_lines
+from point_cloud_registration import estimate_normals, get_norm_lines
+from point_cloud_registration.kdtree import KDTree
 import q3dviewer as q3d
 
 
@@ -43,13 +44,23 @@ def get_norm_lines(points, normals, length=0.1):
 
 if __name__ == '__main__':
     points = generate_test_data()
-    k = 15
+    k = 6
 
     # Test our implementation
     t1, our_normals = test_our_estimate_normals(points, k)
 
     # Test Open3D implementation
     t2, open3d_normals = test_open3d_estimate_normals(points, k)
+
+    # from point_cloud_registration.estimate_normals import estimate_normals_with_tree, estimate_normals_with_tree2
+    # tree = KDTree(points)
+    # t1 = time.time()
+    # estimate_normals_with_tree(points, tree, k=k)
+    # t2 = time.time()
+    # estimate_normals_with_tree2(points, tree, k=k)
+    # t3 = time.time()
+    # print("KDTree time:", t2 - t1)
+    # print("KDTree2 time:", t3 - t2)
 
     # Print results
     print("\nComparison:")

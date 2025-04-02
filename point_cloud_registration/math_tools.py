@@ -16,6 +16,18 @@ def huber_weight(r, d=1.0):
     return weights
 
 
+def skew_time_vector(v1, v2):   
+    # Efficiently compute skew(v1) @ v2
+    x, y, z = v1[:, 0], v1[:, 1], v1[:, 2]
+    a, b, c = v2[:, 0], v2[:, 1], v2[:, 2]
+    # skew(v1) @ v2
+    res = np.zeros((v1.shape[0], 3))
+    res[:, 0] = -z * b + y * c
+    res[:, 1] = z * a - x * c
+    res[:, 2] = -y * a + x * b
+    return res
+
+
 def skews(vectors):
     # Efficiently compute skew-symmetric matrices for a batch of vectors
     x, y, z = vectors[:, 0], vectors[:, 1], vectors[:, 2]

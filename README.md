@@ -51,7 +51,7 @@ target = np.random.rand(100, 3)  # Nx3 point numpy array
 scan = np.random.rand(80, 3)    # Mx3 point numpy array
 
 icp = VoxelPoint2PlaneICP(voxel_size=0.5, max_iter=100, max_dist=2, tol=1e-3)
-icp.update_target(target)  # Set the target point cloud
+icp.set_target(target)  # Set the target point cloud
 T_new = icp.align(scan, init_T=np.eye(4))  # Fit the scan to the target
 print("Estimated Transform matrix:\n", T_new)
 ```

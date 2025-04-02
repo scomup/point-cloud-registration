@@ -1,22 +1,8 @@
 import numpy as np
 from point_cloud_registration.registration import Registration
-from point_cloud_registration.voxel import VoxelGrid
-from point_cloud_registration.math_tools import makeRt, plus, skews, transform_points, skew
+from point_cloud_registration.math_tools import transform_points, skew, skew_time_vector
 from point_cloud_registration.kdtree import KDTree
-from point_cloud_registration.estimate_normals import estimate_normals
-import time
-
-
-def skew_time_vector(v1, v2):   
-    # Efficiently compute skew(v1) @ v2
-    x, y, z = v1[:, 0], v1[:, 1], v1[:, 2]
-    a, b, c = v2[:, 0], v2[:, 1], v2[:, 2]
-    # skew(v1) @ v2
-    res = np.zeros((v1.shape[0], 3))
-    res[:, 0] = -z * b + y * c
-    res[:, 1] = z * a - x * c
-    res[:, 2] = -y * a + x * b
-    return res
+from point_cloud_registration.estimate_normals import estimate_norm_cov_mean_with_tree
 
 
 class PlaneICP(Registration):
@@ -25,14 +11,11 @@ class PlaneICP(Registration):
         self.voxel_size = voxel_size
         self.max_dist = max_dist
 
-    def update_target(self, target):
+    def set_target(self, target, k=6):
+        self.target = target.astype(np.float32)
         self.kdtree = KDTree(target)
-        self.normal = estimate_normals(target)
-        self.target = target
-
-    def set_target(self, target):
-        self.kdtree = None
-        self.update_target(target)
+        self.normal, _, _ = estimate_norm_cov_mean_with_tree(
+            target, self.kdtree, k=k)
 
     def calc_H_g_e2(self, cur_T, source):
         """
@@ -45,14 +28,16 @@ class PlaneICP(Registration):
         if self.kdtree is None:
             raise ValueError("Target is not set.")
         R = cur_T[:3, :3]
-        source_trans = transform_points(cur_T.astype(np.float32), source)
-        _, idx = self.kdtree.query(
-            source_trans, distance_upper_bound=self.max_dist)
-        mask = idx != np.inf
+        src_trans = transform_points(cur_T.astype(np.float32), source)
+        # if the dx is large, we research the nearest points
+        dist, idx = self.kdtree.query(src_trans)
+        mask = dist < self.max_dist
         idx = idx[mask]
+
         means = self.target[idx]
         norms = self.normal[idx]
-        diff = source_trans - means
+        src_trans = src_trans[mask]
+        diff = src_trans - means
         src_mask = source[mask]
         rs = np.einsum('ij,ij->i', norms, diff)
         Jt = norms
@@ -63,6 +48,11 @@ class PlaneICP(Registration):
         H_ll = np.einsum('ij,ik->jk', Jt, Jt)
         H_lr = np.einsum('ij,ik->jk', Jt, Jr)
         H_rr = np.einsum('ij,ik->jk', Jr, Jr)
+        # H = np.zeros((6, 6))
+        # H[:3, :3] = H_ll
+        # H[:3, 3:] = H_lr
+        # H[3:, :3] = H_lr.T
+        # H[3:, 3:] = H_rr
         H = np.zeros((6, 6))
         H[:3, :3] = H_ll
         H[:3, 3:] = H_lr
@@ -81,6 +71,7 @@ class PlaneICP(Registration):
         """
         Note: This is a non-parallel version of calc_H_g_e2.
         This function is just for helping to understand the algorithm.
+        the logic is the totally same as calc_H_g_e2.
         """
 
         if self.kdtree is None:

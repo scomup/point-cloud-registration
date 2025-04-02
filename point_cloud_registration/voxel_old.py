@@ -63,65 +63,43 @@ class VoxelGrid:
     """
     An efficient VoxelGrid structure using hash table
     """
-    def __init__(self, voxel_size, min_points=6):
+    def __init__(self, voxel_size):
         self.voxel_size = voxel_size
         self.voxels = defaultdict(VoxelCell)
         self.kdtree = None
         self.voxel_keys = None
-        self.min_points = min_points
     
     def add_points(self, points):
-        points = points.astype(np.float32)
-        # get the hash keys for the points
-        # the points are in the same voxel will have the same key
+        points = points.astype(np.float32)  # Ensure type is float32
         keys = get_keys(points, self.voxel_size)
 
-        # Use p.unique to get unique keys and indices
-        _, inverse_indices = np.unique(keys, return_inverse=True)
+        # The points in the same voxel will have the same key
+        _, unique_indices = np.unique(keys, return_inverse=True)
 
-        # Count number of points in each voxel
-        counts = np.bincount(inverse_indices)
+        # Sort by unique_indices, points in same voxel are grouped together
+        idx = np.argsort(unique_indices)
+        sorted_points = points[idx]
+        sorted_keys = keys[idx]
+        sorted_unique_indices = unique_indices[idx]
 
-        # Create a mask to filter out voxels with less than min_points
-        mask = counts >= self.min_points
+        # Find the start and end indices of points in each voxel using prefix sum
+        prefix_sum = np.cumsum(np.r_[0, np.diff(sorted_unique_indices) != 0])
+        ranges = np.where(prefix_sum[:-1] != prefix_sum[1:])[0] + 1
+        ranges = np.r_[0, ranges, len(sorted_points)]  # Add first & last indices
 
-        # Filter points and keys based on the mask
-        filter = mask[inverse_indices]
-        points = points[filter]
-        keys = keys[filter]
-        _, indices = np.unique(keys, return_inverse=True)
-        counts = np.bincount(indices)
+        # Add points to each voxel
+        for i in range(len(ranges) - 1):
+            start, end = ranges[i], ranges[i + 1]
+            group_points = sorted_points[start:end]
+            if len(group_points) >= 4:  # Only process groups with >= 4 points
+                key = sorted_keys[start]
+                self.voxels[key].add_points(group_points)
 
-        # how to get i
+        # Build KDTree using voxel means, for fast nearest neighbor search
+        self.voxel_keys, voxel_points = zip(
+            *[(key, self.voxels[key].mean) for key in self.voxels])
+        self.kdtree = KDTree(np.array(voxel_points, dtype=np.float32))
 
-        # Sum coordinates within each voxel
-        summed_x = np.bincount(indices, weights=points[:, 0])
-        summed_y = np.bincount(indices, weights=points[:, 1])
-        summed_z = np.bincount(indices, weights=points[:, 2])
-
-            # Subtract centroids from points to get deviations
-
-
-        # Compute centroids for voxels
-        centroids_x = summed_x / counts
-        centroids_y = summed_y / counts
-        centroids_z = summed_z / counts
-
-        # centroids of voxels with less than min_points
-        centroids = np.vstack((centroids_x, centroids_y, centroids_z)).T
-        deviations = points - centroids[indices]
-        # outer_products = deviations @ deviations.transpose((0, 2, 1))
-        outer_products = np.einsum('ij,ik->ijk', deviations, deviations)
-        # Sum outer products for each voxel
-        covariance_sum = np.zeros((centroids.shape[0], 3, 3))
-        np.add.at(covariance_sum, indices, outer_products)
-
-        # Normalize by counts to get covariance matrices
-        covariances = covariance_sum / counts[:, None, None]
-        # how to get the covariance of the points in same voxel
-        # covs = np.zeros((centroids.shape[0], 3, 3))
-
-        return covariances
 
     def find(self, point):
         # Use kdtree to find the nearest cell
@@ -206,10 +184,9 @@ def voxel_filter(points, voxel_size):
     """
     import time
     t1 = time.time()
+    # generate a keys hash for each point, points in the same voxel will have the same key
     keys = get_keys(points, voxel_size)
-    t2 = time.time()
     _, inverse_indices = np.unique(keys, return_inverse=True)
-    t3 = time.time()
     summed_x = np.bincount(inverse_indices, weights=points[:, 0])
     summed_y = np.bincount(inverse_indices, weights=points[:, 1])
     summed_z = np.bincount(inverse_indices, weights=points[:, 2])

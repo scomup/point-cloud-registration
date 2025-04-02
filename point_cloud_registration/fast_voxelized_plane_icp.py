@@ -21,7 +21,7 @@ class FastVPlaneICP:
         _, w, indices = fast_caratheodory(P, ws, 64, N_target)
         return indices, w
 
-    def update_target(self, points):
+    def set_target(self, points):
         self.voxels.add_points(points)
 
     def linearize(self, cur_T, source):
@@ -84,37 +84,4 @@ class FastVPlaneICP:
             cur_T = cur_T @ dT
 
         return cur_T
-
-if __name__ == '__main__':
-    # Generate N x 3 points
-    map, _ = q3d.load_pcd("/home/liu/tmp/recorded_frames/clouds/0.pcd")
-    scan, _ = q3d.load_pcd("/home/liu/tmp/recorded_frames/clouds/2.pcd")
-    map = map['xyz']
-    scan = scan['xyz']
-
-
-    icp = FastVPlaneICP(0.5, N_target=2000)
-    icp.update_target(map)
-    T_new = icp.align(scan, init_T=np.eye(4))
-    R_new, t_new = makeRt(T_new)
-    scan_new = (R_new @ scan.T).T + t_new
-
-    app = q3d.QApplication([])
-
-    # create viewer
-    viewer = q3d.Viewer(name='example')
-    # add all items to viewer
-    viewer.add_items({
-        'grid': q3d.GridItem(size=10, spacing=1),
-        'map': q3d.CloudItem(size=0.005, alpha=0.5, point_type='SPHERE', \
-                              color_mode='FLAT', color='#00ff00', depth_test=True),
-        'scan': q3d.CloudItem(size=0.005, alpha=0.5, point_type='SPHERE', \
-                              color_mode='FLAT', color='#ff0000', depth_test=True),
-        'norm': q3d.LineItem(width=2, color='#00ff00', line_type='LINES')})
-
-    viewer['map'].set_data(map)
-    viewer['scan'].set_data(scan_new)
-
-    viewer.show()
-    app.exec()
 

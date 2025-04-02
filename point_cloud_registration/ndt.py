@@ -11,14 +11,9 @@ class NDT(Registration):
         self.voxel_size = voxel_size
         self.max_dist = max_dist
 
-    def update_target(self, target):
-        if self.voxels is None:
-            self.voxels = VoxelGrid(self.voxel_size)
-        self.voxels.add_points(target)
-
     def set_target(self, target):
-        self.voxels = None
-        self.update_target(target)
+        self.voxels = VoxelGrid(self.voxel_size)
+        self.voxels.add_points(target)
 
     def calc_H_g_e2(self, cur_T, source):
         if self.voxels is None:

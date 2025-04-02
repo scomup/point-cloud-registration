@@ -31,17 +31,18 @@ class ICP(Registration):
         src_trans = transform_points(cur_T.astype(np.float32), source)
         dist, idx = self.kdtree.query(src_trans)
         mask = dist < self.max_dist
+        idx = idx[mask]
         src_trans = src_trans[mask]
         num = src_trans.shape[0]
-        source_mask = source[mask]
+        src_mask = source[mask]
         qs = self.target[idx]
         rs = src_trans - qs
         R = cur_T[:3, :3]
-        S = skews(source_mask)
-        S_sum = skew(np.sum(source_mask, axis=0))
+        S = skews(src_mask)
+        S_sum = skew(np.sum(src_mask, axis=0))
         H_ll = num * np.eye(3)
         H_lr = - R @ S_sum
-        H_rr = skew2(source_mask)
+        H_rr = skew2(src_mask)
         H = np.zeros((6, 6))
         H[:3, :3] = H_ll
         H[:3, 3:] = H_lr
@@ -58,6 +59,7 @@ class ICP(Registration):
         """
         Note: This is a non-parallel version of calc_H_g_e2.
         This function is just for helping to understand the algorithm.
+        the logic is the totally same as calc_H_g_e2.
         """
         if self.kdtree is None:
             raise ValueError("Target is not set.")
