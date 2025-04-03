@@ -48,11 +48,6 @@ class PlaneICP(Registration):
         H_ll = np.einsum('ij,ik->jk', Jt, Jt)
         H_lr = np.einsum('ij,ik->jk', Jt, Jr)
         H_rr = np.einsum('ij,ik->jk', Jr, Jr)
-        # H = np.zeros((6, 6))
-        # H[:3, :3] = H_ll
-        # H[:3, 3:] = H_lr
-        # H[3:, :3] = H_lr.T
-        # H[3:, 3:] = H_rr
         H = np.zeros((6, 6))
         H[:3, :3] = H_ll
         H[:3, 3:] = H_lr
@@ -77,17 +72,20 @@ class PlaneICP(Registration):
         if self.kdtree is None:
             raise ValueError("Target is not set.")
         R = cur_T[:3, :3]
-        source_trans = transform_points(cur_T, source)
-        _, idx = self.kdtree.query(source_trans.astype(np.float32))
+        src_trans = transform_points(cur_T.astype(np.float32), source)
+        dist, idx = self.kdtree.query(src_trans)
+        mask = dist < self.max_dist
+        idx = idx[mask]
         means = self.target[idx]
         norms = self.normal[idx]
+        src_trans = src_trans[mask]
 
         H = np.zeros((6, 6))
         g = np.zeros(6)
         e2 = 0
         for i in range(source.shape[0]):
             n = norms[i]
-            r = n @ (source_trans[i] - means[i])
+            r = n @ (src_trans[i] - means[i])
             J = np.zeros((1, 6))
             J[0, :3] = n
             J[0, 3:] = skew(source[i]) @ (R.T @ n.T)

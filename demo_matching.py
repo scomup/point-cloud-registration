@@ -1,9 +1,9 @@
-from point_cloud_registration import VPlaneICP
-from point_cloud_registration import ICP
-from point_cloud_registration import NDT
+from point_cloud_registration import ICP, PlaneICP, NDT, VPlaneICP, voxel_filter, estimate_normals, expSO3
 
 from point_cloud_registration.math_tools import makeRt, expSO3, transform_points, makeT
 import numpy as np
+from benchmark.test_data import generate_test_data
+
 
 try:
     import q3dviewer as q3d
@@ -11,17 +11,11 @@ except ImportError:
     print("Please install q3dviewer using 'pip install q3dviewer'")
     exit(0)
 
+
 if __name__ == '__main__':
 
     # Generate N x 3 points
-    map, _ = q3d.load_pcd("/home/liu/tmp/recorded_frames/clouds/0.pcd")
-
-    # T = makeT(expSO3(np.array([0.0, 0.0, 0.0])), np.array([0.3, 0.0, 0.0]))
-    # scan = transform_points(T, map['xyz'])
-    scan, _ = q3d.load_pcd("/home/liu/tmp/recorded_frames/clouds/2.pcd")
-    map = map['xyz']
-    scan = scan['xyz']
-
+    map, scan = generate_test_data()
     
     T = np.eye(4)
     # T = np.array([[0.91724685,  0.39554969, -0.04691057, -0.01918991],
@@ -30,7 +24,7 @@ if __name__ == '__main__':
     #               [0.,  0.,  0.,  1.]])
 
     # T = np.eye(4)
-    icp = NDT(voxel_size=1, max_iter=100, max_dist=100, tol=1e-5)
+    icp = PlaneICP(voxel_size=1, max_iter=100, max_dist=100, tol=1e-5)
     icp.set_target(map)
     T_new = icp.align(scan, init_T=T, verbose=True)
     # icp.max_dist = 0.1
@@ -49,9 +43,9 @@ if __name__ == '__main__':
     # add all items to viewer
     viewer.add_items({
         'grid': q3d.GridItem(size=10, spacing=1),
-        'map': q3d.CloudItem(size=0.01, alpha=0.5, point_type='SPHERE', \
+        'map': q3d.CloudItem(size=0.01, alpha=0.3, point_type='SPHERE', \
                               color_mode='FLAT', color='#00ff00', depth_test=True),
-        'scan': q3d.CloudItem(size=0.01, alpha=0.5, point_type='SPHERE', \
+        'scan': q3d.CloudItem(size=0.05, alpha=1, point_type='SPHERE', \
                               color_mode='FLAT', color='#ff0000', depth_test=True),
         'norm': q3d.LineItem(width=2, color='#00ff00', line_type='LINES')})
 

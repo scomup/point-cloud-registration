@@ -1,8 +1,7 @@
 import numpy as np
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from caratheodory import fast_caratheodory, create_gn_set
+from point_cloud_registration.caratheodory import create_gn_set, fast_caratheodory
 
 def test_exact_same_results():
     N = 30000  # Number of input residuals

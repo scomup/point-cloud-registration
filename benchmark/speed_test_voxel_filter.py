@@ -5,13 +5,8 @@ from point_cloud_registration.voxel import voxel_filter, voxel_filter_old
 import open3d as o3d
 from point_cloud_registration.math_tools import expSO3
 import q3dviewer as q3d
+from test_data import generate_test_data
 
-
-def generate_test_data():
-    # Generate synthetic data for testing
-    # Generate N x 3 points
-    map, _ = q3d.load_pcd("/home/liu/tmp/recorded_frames/clouds/0.pcd")
-    return map['xyz']
 
 
 def test_voxel_filter(voxel_size, points):
@@ -38,7 +33,7 @@ def test_open3d_voxel_filter(voxel_size, points):
     return elapsed_time, filtered_points
 
 if __name__ == '__main__':
-    map_points = generate_test_data()
+    map_points, _ = generate_test_data()
 
     voxel_size = 0.5
 

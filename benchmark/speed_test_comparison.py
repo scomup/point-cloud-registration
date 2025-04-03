@@ -4,16 +4,7 @@ from point_cloud_registration import ICP, PlaneICP, NDT, VPlaneICP, voxel_filter
 import open3d as o3d
 import q3dviewer as q3d
 
-
-def generate_test_data():
-    # Generate synthetic data for testing
-    map, _ = q3d.load_pcd("/home/liu/tmp/recorded_frames/clouds/0.pcd")
-    map = map['xyz']
-    R = expSO3(np.array([0.0, 0.0, 0.0]))
-    t = np.array([0.1, 0.0, 0.0])
-    scan = (R @ map.T).T + t
-    return map, scan
-
+from test_data import generate_test_data
 
 def test_icp(map_points, scan_points, max_iter, tol, max_dist):
     start_time = time.time()
@@ -127,7 +118,7 @@ def test_open3d_estimate_normals(points, k):
     return elapsed_time, normals
 
 
-def test_small_gicp(map_points, scan_points, max_iter, tol, max_dist, downsampling_resolution):
+def test_small_gicp(map_points, scan_points, max_iter, tol, max_dist, down_res):
     """
     Test the performance of small_gicp.
     """
@@ -148,9 +139,9 @@ def test_small_gicp(map_points, scan_points, max_iter, tol, max_dist, downsampli
             map_points, scan_points,
             registration_type=algo,
             max_correspondence_distance=max_dist,
-            downsampling_resolution=downsampling_resolution,
+            downsampling_resolution=0.01, # dont use downsampling
             max_iterations=max_iter,
-            verbose=(algo=='ICPX'),
+            verbose=False,
             # translation_epsilon=tol,
             # rotation_epsilon=tol
         )
@@ -162,11 +153,11 @@ if __name__ == '__main__':
     map_points, scan_points = generate_test_data()
 
     # Parameters (consistent with C++ implementation)
-    max_iter = 30  # Maximum iterations for ICP and NDT
+    max_iter = 10  # Maximum iterations for ICP and NDT
     tol = 1e-3  # Tolerance for convergence
-    max_dist = 2  # Maximum correspondence distance
-    voxel_size = 0.5  # Voxel size
-    k = 15  # Number of nearest neighbors for normal estimation
+    voxel_size = 1  # Voxel size
+    max_dist = voxel_size * 2  # Maximum correspondence distance
+    k = 5  # Number of nearest neighbors for normal estimation
 
     # Test voxel filters
     print("voxel_filter...")
@@ -183,14 +174,18 @@ if __name__ == '__main__':
     # Test algorithms
     # Output comparison table
 
-    num_points = len(map_points)
-    print(f"\nNumber of points: {num_points}")
-    print("Note: we do not use the downsampled point cloud for registration!")
+    # num_points = len(map_points)
+    # print(f"\nNumber of points: {num_points}")
+    # print("Note: we do not use the downsampled point cloud for registration!")
     print(f"\nSpeed Comparison Registration Algorithms:")
     print(f"{'Algorithm':<35}{'Execution Time (s)':>20}")
     print("-" * 55)
     
-
+    _, time_open3d_icp = test_open3d_icp(map_points, scan_points, max_iter, tol, max_dist)
+    print(f"{'Open3D ICP':<35}{time_open3d_icp:>20.6f}")
+    _, time_open3d_ppicp = test_open3d_ppicp(map_points, scan_points, max_iter, tol, max_dist, k)
+    print(f"{'Open3D Point-to-Plane ICP':<35}{time_open3d_ppicp:>20.6f}")
+    test_small_gicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size)
     _, time_icp = test_icp(map_points, scan_points, max_iter, tol, max_dist)
     print(f"{'Our ICP':<35}{time_icp:>20.6f}")
     _, time_ppicp = test_ppicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size)
@@ -199,11 +194,6 @@ if __name__ == '__main__':
     print(f"{'Our NDT':<35}{time_ndt:>20.6f}")
     _, time_vppicp = test_vppicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size)
     print(f"{'Our Voxelized Point-to-Plane ICP':<35}{time_vppicp:>20.6f}")
-    _, time_open3d_icp = test_open3d_icp(map_points, scan_points, max_iter, tol, max_dist)
-    print(f"{'Open3D ICP':<35}{time_open3d_icp:>20.6f}")
-    _, time_open3d_ppicp = test_open3d_ppicp(map_points, scan_points, max_iter, tol, max_dist, k)
-    print(f"{'Open3D Point-to-Plane ICP':<35}{time_open3d_ppicp:>20.6f}")
-
     # Test normal estimation
     print("our_estimate_normals...")
     t3, our_normals = test_our_estimate_normals(map_points, k)
@@ -213,3 +203,5 @@ if __name__ == '__main__':
     print("\nSpeed Comparison Normal Estimation:")
     print(f"{'Algorithm':<35}{'Execution Time (s)':>20}")
     print("-" * 55)
+    print(f"{'Our Normal Estimation':<35}{t3:>20.6f}")
+    print(f"{'Open3D Normal Estimation':<35}{t4:>20.6f}")

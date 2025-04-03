@@ -22,7 +22,7 @@ class FastVPlaneICP:
         return indices, w
 
     def set_target(self, points):
-        self.voxels.add_points(points)
+        self.voxels.set_points(points)
 
     def linearize(self, cur_T, source):
             R, t = makeRt(cur_T)

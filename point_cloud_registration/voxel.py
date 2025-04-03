@@ -36,26 +36,62 @@ class VoxelGrid:
         self.kdtree = None
         self.min_points = min_points
 
-    def add_points(self, points):
+    def calc_icov(self):
+        """
+        fast inverse of covariance matrix
+        20x faster than np.linalg.inv(self.cov)
+        """
+        a, b, c = self.cov[:, 0, 0], self.cov[:, 1, 1], self.cov[:, 2, 2]
+        d, e, f = self.cov[:, 0, 1], self.cov[:, 0, 2], self.cov[:, 1, 2]
+        f2, d2, e2 = f * f, d * d, e * e
+        bc, ac, ab = b * c, a * c, a * b
+        dc, de, ef = d * c, d * e, e * f
+        af, df, eb = a * f, d * f, e * b
+        det_A = a * bc + 2 * de * f - a * f2 - b * e2 - c * d2
+
+        # if np.any(det_A == 0):
+        #     raise ValueError("Singular covariance matrix detected. \
+        #              The number of points may be too small. \
+        #              Use a larger voxel size.")
+
+        det_A[det_A == 0] = 1000000 # set a large value to avoid singular matrix
+
+        # Compute cofactor matrix
+        c0 =  (bc - f2) / det_A
+        c1 = -(dc - ef) / det_A
+        c2 =  (df - eb) / det_A
+        c3 =  (ac - e2) / det_A
+        c4 = -(af - de) / det_A
+        c5 = ( ab - d2) / det_A
+        icov = np.array([
+            [c0, c1, c2],
+            [c1, c3, c4],
+            [c2, c4, c5]])
+
+        # Compute inverse using adjugate and determinant
+        self.icov = icov.transpose(2, 0, 1)  # shape: (N, 3, 3)
+
+    def set_points(self, points):
         points = points.astype(np.float32)
 
         # Compute voxel keys
         keys = get_keys(points, self.voxel_size)
-        _, inverse_indices = np.unique(keys, return_inverse=True)
+        _, indices0 = np.unique(keys, return_inverse=True)
 
         # Count points per voxel
-        counts = np.bincount(inverse_indices)
+        counts = np.bincount(indices0)
         mask = counts >= self.min_points
 
-        # Filter valid points
-        filter = mask[inverse_indices]
+        # Filter valid voxels which have enough points
+        filter = mask[indices0]
         points = points[filter]
         keys = keys[filter]
 
+        # recompute the indices after filtering
         _, indices = np.unique(keys, return_inverse=True)
         counts = np.bincount(indices)
 
-        # Compute centroids
+        # Compute centroids of each voxel
         summed_x = np.bincount(indices, weights=points[:, 0])
         summed_y = np.bincount(indices, weights=points[:, 1])
         summed_z = np.bincount(indices, weights=points[:, 2])
@@ -77,51 +113,39 @@ class VoxelGrid:
         cov_xz = dev_x * dev_z
         cov_yz = dev_y * dev_z
 
-        # Compute covariance matrices
-        valid_counts = np.maximum(counts - 1, 1)  # Prevent division by zero
-        covar00 = np.bincount(indices, weights=cov_xx) / valid_counts
-        covar01 = np.bincount(indices, weights=cov_xy) / valid_counts
-        covar02 = np.bincount(indices, weights=cov_xz) / valid_counts
-        covar11 = np.bincount(indices, weights=cov_yy) / valid_counts
-        covar12 = np.bincount(indices, weights=cov_yz) / valid_counts
-        covar22 = np.bincount(indices, weights=cov_zz) / valid_counts
+        # Compute covariance of each voxel
+        counts_1 = counts - 1  # the min of counts shloud over self.min_points
+        c00 = np.bincount(indices, weights=cov_xx) / counts_1
+        c01 = np.bincount(indices, weights=cov_xy) / counts_1
+        c02 = np.bincount(indices, weights=cov_xz) / counts_1
+        c11 = np.bincount(indices, weights=cov_yy) / counts_1
+        c12 = np.bincount(indices, weights=cov_yz) / counts_1
+        c22 = np.bincount(indices, weights=cov_zz) / counts_1
         # Stack covariance matrices
         covs = np.stack(
-            [[covar00, covar01, covar02],
-             [covar01, covar11, covar12],
-             [covar02, covar12, covar22]]).transpose(2, 0, 1)
+            [[c00, c01, c02],
+             [c01, c11, c12],
+             [c02, c12, c22]]).transpose(2, 0, 1)
 
         # get the normal of each voxel
         _, eigenvectors = np.linalg.eigh(covs)
         norms = eigenvectors[:, :, 0]
 
         # Create data for voxels
-        self.norms = norms
-        self.covs = covs
-        self.means = means
+        self.norm = norms
+        self.cov = covs
+        self.mean = means
         self.kdtree = KDTree(means)
-
-    def find(self, point):
-        # Use kdtree to find the nearest cell
-        _, idx = self.kdtree.query(point)
-        key = list(self.voxels.keys())[idx]
-        return self.voxels[key]
 
     def query(self, points, names):
         """
         Query multiple voxels at once.
         """
         # Use kdtree to find the nearest cell
-        _, idx = self.kdtree.query(points)
-        data = []
-        for n in names:
-            if n == 'mean':
-                data.append(self.means[idx])
-            elif n == 'norm':
-                data.append(self.norms[idx])
-            elif n == 'cov':
-                data.append(self.covs[idx]) 
-        return data
+        dist, idx = self.kdtree.query(points)
+        query_data = {name: getattr(self, name)[idx] for name in names}
+        query_data['dist'] = dist
+        return query_data
 
 
 def color_by_voxel(points, voxel_size):
@@ -184,11 +208,11 @@ def voxel_filter(points, voxel_size):
     - np.ndarray: Filtered point cloud of shape (M, 3), where M <= N.
     """
     import time
-    t1 = time.time()
+    #t1 = time.time()
     keys = get_keys(points, voxel_size)
-    t2 = time.time()
+    #t2 = time.time()
     _, inverse_indices = np.unique(keys, return_inverse=True)
-    t3 = time.time()
+    #t3 = time.time()
     summed_x = np.bincount(inverse_indices, weights=points[:, 0])
     summed_y = np.bincount(inverse_indices, weights=points[:, 1])
     summed_z = np.bincount(inverse_indices, weights=points[:, 2])
@@ -199,9 +223,9 @@ def voxel_filter(points, voxel_size):
     filtered_z = summed_z / counts[:, 0]
     filtered_points = np.stack(
         (filtered_x, filtered_y, filtered_z), axis=1).astype(np.float32)
-    t4 = time.time()
-    # print(f"Time taken for key generation: {t2 - t1:.6f} seconds")
-    # print(f"Time taken for unique indices: {t3 - t2:.6f} seconds")
-    # print(f"Time taken for voxel filtering: {t4 - t3:.6f} seconds")
-    # print(f"Total time taken: {t4 - t1:.6f} seconds")
+    # t4 = time.time()
+    # print(f"get keys time: {(t2 - t1) :.2f} sec")
+    # print(f"get unique time: {(t3 - t2) :.2f} sec")
+    # print(f"compute mean time: {(t4 - t3) :.2f} sec")
+    # print(f"total time: {(t4 - t1) :.2f} sec")
     return filtered_points

@@ -5,11 +5,8 @@ from point_cloud_registration import estimate_normals, get_norm_lines
 from point_cloud_registration.kdtree import KDTree
 import q3dviewer as q3d
 
+from benchmark.test_data import generate_test_data
 
-def generate_test_data():
-    # Generate synthetic data for testing
-    map, _ = q3d.load_pcd("/home/liu/tmp/recorded_frames/clouds/0.pcd")
-    return map['xyz']
 
 
 def test_our_estimate_normals(points, k):
@@ -43,8 +40,8 @@ def get_norm_lines(points, normals, length=0.1):
 
 
 if __name__ == '__main__':
-    points = generate_test_data()
-    k = 6
+    points, _ = generate_test_data()
+    k = 5
 
     # Test our implementation
     t1, our_normals = test_our_estimate_normals(points, k)
