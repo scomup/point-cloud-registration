@@ -1,7 +1,7 @@
 import numpy as np
 import time
 from point_cloud_registration.icp import ICP
-from point_cloud_registration.voxel import voxel_filter, voxel_filter_old
+from point_cloud_registration.voxel import voxel_filter
 import open3d as o3d
 from point_cloud_registration.math_tools import expSO3
 import q3dviewer as q3d
@@ -12,13 +12,6 @@ from test_data import generate_test_data
 def test_voxel_filter(voxel_size, points):
     start_time = time.time()
     filtered_points = voxel_filter(points, voxel_size)
-    elapsed_time = time.time() - start_time
-    return elapsed_time, filtered_points
-
-
-def test_voxel_filter_old(voxel_size, points):
-    start_time = time.time()
-    filtered_points = voxel_filter_old(points, voxel_size)
     elapsed_time = time.time() - start_time
     return elapsed_time, filtered_points
 
@@ -39,8 +32,6 @@ if __name__ == '__main__':
 
     t1, our_filtered = test_voxel_filter(voxel_size, map_points)
 
-    t2, our_filtered_old = test_voxel_filter_old(voxel_size, map_points)
-
     t3, open3d_filtered = test_open3d_voxel_filter(voxel_size, map_points)
 
     app = q3d.QApplication([])
@@ -57,7 +48,6 @@ if __name__ == '__main__':
 
     print("\nComparison:")
     print(f"Open3D voxel_filter time: {t3:.6f} seconds")
-    print(f"Our voxel_filter_old time: {t2:.6f} seconds")
     print(f"Our voxel_filter_optimized time: {t1:.6f} seconds")
     viewer.show()
     app.exec()

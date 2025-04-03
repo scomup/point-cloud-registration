@@ -180,12 +180,6 @@ if __name__ == '__main__':
     print(f"\nSpeed Comparison Registration Algorithms:")
     print(f"{'Algorithm':<35}{'Execution Time (s)':>20}")
     print("-" * 55)
-    
-    _, time_open3d_icp = test_open3d_icp(map_points, scan_points, max_iter, tol, max_dist)
-    print(f"{'Open3D ICP':<35}{time_open3d_icp:>20.6f}")
-    _, time_open3d_ppicp = test_open3d_ppicp(map_points, scan_points, max_iter, tol, max_dist, k)
-    print(f"{'Open3D Point-to-Plane ICP':<35}{time_open3d_ppicp:>20.6f}")
-    test_small_gicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size)
     _, time_icp = test_icp(map_points, scan_points, max_iter, tol, max_dist)
     print(f"{'Our ICP':<35}{time_icp:>20.6f}")
     _, time_ppicp = test_ppicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size)
@@ -194,6 +188,12 @@ if __name__ == '__main__':
     print(f"{'Our NDT':<35}{time_ndt:>20.6f}")
     _, time_vppicp = test_vppicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size)
     print(f"{'Our Voxelized Point-to-Plane ICP':<35}{time_vppicp:>20.6f}")
+
+    _, time_open3d_icp = test_open3d_icp(map_points, scan_points, max_iter, tol, max_dist)
+    print(f"{'Open3D ICP':<35}{time_open3d_icp:>20.6f}")
+    _, time_open3d_ppicp = test_open3d_ppicp(map_points, scan_points, max_iter, tol, max_dist, k)
+    print(f"{'Open3D Point-to-Plane ICP':<35}{time_open3d_ppicp:>20.6f}")
+    test_small_gicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size)
     # Test normal estimation
     print("our_estimate_normals...")
     t3, our_normals = test_our_estimate_normals(map_points, k)

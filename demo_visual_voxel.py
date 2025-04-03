@@ -31,7 +31,7 @@ if __name__ == '__main__':
     color_points = color_by_voxel(points, voxel_size)
     viewer['scan'].set_data(color_points)
 
-    normal_length = 0.1
+    normal_length = 0.5
     lines = []
     for mean, norm in zip(voxels.mean, voxels.norm):
             lines.append(mean)

@@ -3,7 +3,8 @@ from collections import defaultdict
 from point_cloud_registration.kdtree import KDTree
 from operator import itemgetter, attrgetter
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
+import time
+# import xxhash
 
 def svd_sqrt(A):
     U, S, Vt = np.linalg.svd(A)  # SVD decomposition
@@ -16,15 +17,40 @@ def get_keys(points, voxel_size=1):
     """
     a faster hash for 3d points
     """
-    # voxel_indices = (points // voxel_size).astype(np.int64)
-    voxel_indices = (points // voxel_size).astype(np.int64)
-    P1 = 2654435761  # Large prime (from Knuth)
-    P2 = 5915587277  # Another large prime
-    # Fast hash computation using multiply-shift-xor
-    keys = (voxel_indices[:, 0] * P1) ^ (voxel_indices[:, 1]
-                                         * P2) ^ voxel_indices[:, 2]
+    voxel_indices = (np.floor(points / voxel_size)).astype(np.int64)
+    HASH_P = 116101
+    MAX_N = 10000000000
+    x, y, z = voxel_indices[:, 0], voxel_indices[:, 1], voxel_indices[:, 2]
+    keys = ((((z * HASH_P) % MAX_N + y) * HASH_P) % MAX_N + x)
     return keys
 
+def fast_unique(keys):
+    # Step 1: Sort the keys and get the sorting indices
+    # t1 = time.time()
+    sorted_indices = np.argsort(keys)
+    # t2 = time.time()
+    sorted_keys = keys[sorted_indices]
+    
+    # Step 2: Find where adjacent sorted keys differ (marking unique groups)
+    diff = np.concatenate(([True], sorted_keys[1:] != sorted_keys[:-1]))
+    # t3 = time.time()
+    
+    # Step 3: Assign unique IDs to each group (cumulative sum of diff)
+    unique_ids = np.cumsum(diff) - 1  # Zero-based indexing
+    #  #t4 = time.time()
+    
+    # Step 4: Reconstruct the inverse mapping for the original array
+    inverse_indices = np.empty_like(keys)
+    inverse_indices[sorted_indices] = unique_ids
+    t5 = time.time()
+    # Print time taken for each step
+    # print(f"Step 1 (Sorting keys): {(t2 - t1) * 1000:.2f} ms")
+    # print(f"Step 2 (Finding differences): {(t3 - t2) * 1000:.2f} ms")
+    # print(f"Step 3 (Assigning unique IDs): {(t4 - t3) * 1000:.2f} ms")
+    # print(f"Step 4 (Reconstructing inverse mapping): {(t5 - t4) * 1000:.2f} ms")
+    # print(f"  fast_unique time: {(t5 - t1) * 1000:.2f} ms")
+    
+    return inverse_indices
 
 class VoxelGrid:
     """
@@ -72,24 +98,13 @@ class VoxelGrid:
         self.icov = icov.transpose(2, 0, 1)  # shape: (N, 3, 3)
 
     def set_points(self, points):
-        points = points.astype(np.float32)
-
+        # t1 = time.time()
         # Compute voxel keys
         keys = get_keys(points, self.voxel_size)
-        _, indices0 = np.unique(keys, return_inverse=True)
-
-        # Count points per voxel
-        counts = np.bincount(indices0)
-        mask = counts >= self.min_points
-
-        # Filter valid voxels which have enough points
-        filter = mask[indices0]
-        points = points[filter]
-        keys = keys[filter]
-
-        # recompute the indices after filtering
+        # t2 = time.time()
         _, indices = np.unique(keys, return_inverse=True)
         counts = np.bincount(indices)
+        # t4 = time.time()
 
         # Compute centroids of each voxel
         summed_x = np.bincount(indices, weights=points[:, 0])
@@ -100,6 +115,7 @@ class VoxelGrid:
         mean_y = summed_y / counts
         mean_z = summed_z / counts
         means = np.vstack((mean_x, mean_y, mean_z)).T
+        # t5 = time.time()
 
         # Compute deviations
         dev = points - means[indices]
@@ -114,7 +130,7 @@ class VoxelGrid:
         cov_yz = dev_y * dev_z
 
         # Compute covariance of each voxel
-        counts_1 = counts - 1  # the min of counts shloud over self.min_points
+        counts_1 = np.maximum(counts - 1, 1)
         c00 = np.bincount(indices, weights=cov_xx) / counts_1
         c01 = np.bincount(indices, weights=cov_xy) / counts_1
         c02 = np.bincount(indices, weights=cov_xz) / counts_1
@@ -126,16 +142,27 @@ class VoxelGrid:
             [[c00, c01, c02],
              [c01, c11, c12],
              [c02, c12, c22]]).transpose(2, 0, 1)
+        
+        # Filter out voxels with too few points
+        mask = counts >= self.min_points
+        means = means[mask]
+        covs = covs[mask]
+        # t6 = time.time()
 
         # get the normal of each voxel
         _, eigenvectors = np.linalg.eigh(covs)
         norms = eigenvectors[:, :, 0]
+        # t7 = time.time()
 
         # Create data for voxels
         self.norm = norms
         self.cov = covs
         self.mean = means
         self.kdtree = KDTree(means)
+        # print(f"get keys time: {(t2 - t1) * 1000:.2f} ms")
+        # print(f"get unique time: {(t4 - t2) * 1000:.2f} ms")
+        # print(f"compute mean time: {(t5 - t4) * 1000:.2f} ms")
+        # print(f"compute cov time: {(t6 - t5) * 1000:.2f} ms")
 
     def query(self, points, names):
         """
@@ -166,34 +193,6 @@ def color_by_voxel(points, voxel_size):
     point_colors = np.rec.fromarrays(
         [points, rgb], dtype=data_type)
     return point_colors
-
-
-def voxel_filter_old(points, voxel_size):
-    """
-    original voxel filter for point clouds
-    please do not use this function
-    """
-
-    keys = get_keys(points, voxel_size)
-    # The points in the same voxel will have the same key
-    _, unique_indices = np.unique(keys, return_inverse=True)
-
-    # Sort by unique_indices, points in same voxel are grouped together
-    idx = np.argsort(unique_indices)
-    sorted_points = points[idx]
-    sorted_unique_indices = unique_indices[idx]
-
-    # Find the start and end indices of points in each voxel using prefix sum
-    prefix_sum = np.cumsum(np.r_[0, np.diff(sorted_unique_indices) != 0])
-    ranges = np.where(prefix_sum[:-1] != prefix_sum[1:])[0] + 1
-    ranges = np.r_[0, ranges, len(sorted_points)]  # Add first & last indices
-    # Add points to each voxel
-    filtered_points = []
-    for i in range(len(ranges) - 1):
-        start, end = ranges[i], ranges[i + 1]
-        group_points = sorted_points[start:end]
-        filtered_points.append(group_points.mean(axis=0))
-    return np.array(filtered_points, dtype=np.float32)
 
 
 def voxel_filter(points, voxel_size):
