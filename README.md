@@ -21,12 +21,12 @@ pip install point-cloud-registration
 pip install q3dviewer==1.1.4 # (optional) for visual demo
 ```
 
-### Current Support Algorithm and Speed Comparison
+### Current Support Algorithm and Speed Comparison [^1]
 
 | Method                          | Our (sec) | Open3D (sec) | PCL (sec) |
 |---------------------------------|-----------|--------------|-----------|
 | Point-to-Point ICP              | **0.641** | 1.269        | 8.69      |
-| Point-to-Plane ICP [^1]         | **0.522** | 0.710        | 6.64      |
+| Point-to-Plane ICP [^2]         | **0.522** | 0.710        | 6.64      |
 | Voxelized Point-to-Plane ICP    | **0.640** | N/A          | N/A       |
 | Normal Distributions Transform (NDT) | **0.872** | N/A          | 19.8      |
 | Normal Estimation               | 2.4111    | **1.343**    | 2.68      |
@@ -42,6 +42,8 @@ mkdir build && cd build
 cmake .. && make
 ./speed_test_comparison # Compare with PCL
 ```
+
+[^2]: Without Normal Estimation
 
 ## Usage  
 
