@@ -34,6 +34,7 @@ pip install q3dviewer==1.1.4 # (optional) for visual demo
 ---
 
 [^1]: **Note**: The above times are based on the test data in `data/B-01.pcd` with over 1,000,000 points, licensed under CC BY 4.0. For more information, see `data/README.md`.  
+
 You can benchmark it yourself using the following commands:
 ```bash
 cd benchmark
