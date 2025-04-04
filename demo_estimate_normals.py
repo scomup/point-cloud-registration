@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     # Optional: Visualize the results using q3dviewer
     app = q3d.QApplication([])
-    viewer = q3d.Viewer(name='Normals Comparison')
+    viewer = q3d.Viewer(name='visualize normals')
     viewer.add_items({
         'points': q3d.CloudItem(size=0.1, 
                                 alpha=1, 

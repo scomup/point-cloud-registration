@@ -24,7 +24,7 @@ if __name__ == '__main__':
     app = q3d.QApplication([])
 
     # create viewer
-    viewer = q3d.Viewer(name='example')
+    viewer = q3d.Viewer(name='visualize voxels')
     # add all items to viewer
     viewer.add_items({
         'grid': q3d.GridItem(size=10, 
