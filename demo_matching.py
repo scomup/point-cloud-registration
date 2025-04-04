@@ -18,12 +18,7 @@ if __name__ == '__main__':
     map, scan = generate_test_data()
     
     T = np.eye(4)
-    # T = np.array([[0.91724685,  0.39554969, -0.04691057, -0.01918991],
-    #               [-0.39801572,  0.90555297, -0.14683008, -0.02283431],
-    #               [-0.01559759,  0.15334987,  0.98804928, -0.00580279],
-    #               [0.,  0.,  0.,  1.]])
 
-    # T = np.eye(4)
     icp = PlaneICP(voxel_size=1, max_iter=100, max_dist=100, tol=1e-5)
     icp.set_target(map)
     T_new = icp.align(scan, init_T=T, verbose=True)
@@ -43,11 +38,11 @@ if __name__ == '__main__':
     # add all items to viewer
     viewer.add_items({
         'grid': q3d.GridItem(size=10, spacing=1),
-        'map': q3d.CloudItem(size=0.01, alpha=0.3, point_type='SPHERE', \
-                              color_mode='FLAT', color='#00ff00', depth_test=True),
+        'map': q3d.CloudItem(size=0.01, alpha=1, point_type='SPHERE', \
+                              color_mode='FLAT', color='lime', depth_test=True),
         'scan': q3d.CloudItem(size=0.05, alpha=1, point_type='SPHERE', \
-                              color_mode='FLAT', color='#ff0000', depth_test=True),
-        'norm': q3d.LineItem(width=2, color='#00ff00', line_type='LINES')})
+                              color_mode='FLAT', color='r', depth_test=True),
+        'norm': q3d.LineItem(width=2, color='lime', line_type='LINES')})
 
     viewer['map'].set_data(map)
     viewer['scan'].set_data(scan_new)

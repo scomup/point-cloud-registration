@@ -4,7 +4,11 @@ from point_cloud_registration.icp import ICP
 from point_cloud_registration.voxel import voxel_filter
 import open3d as o3d
 from point_cloud_registration.math_tools import expSO3
-import q3dviewer as q3d
+try:
+    import q3dviewer as q3d
+except ImportError:
+    print("To visualize the results, please install q3dviewer first by using 'pip install q3dviewer'")
+    exit(1)
 from test_data import generate_test_data
 
 

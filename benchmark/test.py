@@ -14,7 +14,7 @@ from test_data import generate_test_data
 if __name__ == '__main__':
     map_points, scan_points = generate_test_data()
 
-    max_iter = 10  # Maximum iterations for ICP and NDT
+    max_iter = 30  # Maximum iterations for ICP and NDT
     tol = 1e-3  # Tolerance for convergence
     voxel_size = 1  # Voxel size
     max_dist = voxel_size * 2  # Maximum correspondence distance

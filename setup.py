@@ -2,9 +2,9 @@ from setuptools import setup, find_packages
 
 setup(
     name='point-cloud-registration',
-    version='1.0.2',
+    version='1.0.3',
     author="Liu Yang",
-    description="A pure python point cloud registration library.",
+    description="A fast and lightweight point cloud registration library implemented purely in Python.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/scomup/point-cloud-registration",

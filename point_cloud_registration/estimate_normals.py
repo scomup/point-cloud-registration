@@ -20,11 +20,11 @@ def estimate_normals(points, k=15):
     # Create a KDTree for efficient nearest neighbor search
     kdtree = KDTree(points)
     # Query k nearest neighbors for each point
-    normals, _, _ = estimate_norm_cov_mean_with_tree(points, kdtree, k=k)
+    normals = estimate_norm_with_tree(points, kdtree, k=k)
     return normals
     
 
-def estimate_norm_cov_mean_with_tree(points, kdtree, k=15):
+def estimate_norm_with_tree(points, kdtree, k=15):
     """
     Estimate the normals of a point cloud using k-nearest neighbors.
     Args:
@@ -34,46 +34,57 @@ def estimate_norm_cov_mean_with_tree(points, kdtree, k=15):
         numpy.ndarray: The estimated normals of shape (N, 3).
     """
     # Query k nearest neighbors for each point
+
+    # t1 = time.time()
     _, indices = kdtree.query(points, k=k)
-    # Gather neighbor points: shape (N, k, 3)
-    neighbors = points[indices]
-    neighbors = neighbors.astype(np.float32)
+    # t2 = time.time()
+    n = len(points)
+    x, y, z = points[:, 0], points[:, 1], points[:, 2]
+    xx = x * x
+    yy = y * y
+    zz = z * z
+    xy = x * y
+    xz = x * z
+    yz = y * z
+    # t3 = time.time()
 
-    # Compute the covariance matrix for each point's neighbors
-    means = neighbors.mean(axis=1)
-    centered = neighbors - means[:, np.newaxis, :]
+    sum = np.zeros((n, 3), dtype=np.float32)
+    ppt = np.zeros((3, 3, n), dtype=np.float32)
 
-    """
-    # original covariance matrix calculation version
-    """
-    # covs = np.einsum('nki,nkj->nij', centered, centered) / (k - 1)
-    # _, eigvecs = np.linalg.eigh(covs) 
+    # the k is not very large, so we can use the for loop
+    for i in range(k):
+        idx = indices[:, i]
+        sum += points[idx]
+        ppt[0, 0] += xx[idx]
+        ppt[1, 1] += yy[idx]
+        ppt[2, 2] += zz[idx]
+        ppt[0, 1] += xy[idx]
+        ppt[0, 2] += xz[idx]
+        ppt[1, 2] += yz[idx]
+    # Copy upper triangular to lower triangular
+    ppt[1, 0] = ppt[0, 1]
+    ppt[2, 0] = ppt[0, 2]
+    ppt[2, 1] = ppt[1, 2]
+    # t4 = time.time()
+    # Compute the mean and covariance
+    ppt = ppt.transpose(2, 0, 1)
+    means = sum / k
+    covs = ppt / k - np.einsum('ij,ik->ijk', means, means)
+    # t5 = time.time()
 
-    """
-    # optimized covariance matrix calculation
-    # reuse the upper triangular part of the covariance matrix
-    # covariance matrix is symmetric, so we can compute only half of it
-    # this way will much faster than the original version
-    """
-    x, y, z = centered[:, :, 0], centered[:, :, 1], centered[:, :, 2]
-    # Compute elements of the covariance matrix
-    xx = np.einsum('ni,ni->n', x, x) / (k - 1)
-    yy = np.einsum('ni,ni->n', y, y) / (k - 1)
-    zz = np.einsum('ni,ni->n', z, z) / (k - 1)
-    xy = np.einsum('ni,ni->n', x, y) / (k - 1)
-    xz = np.einsum('ni,ni->n', x, z) / (k - 1)
-    yz = np.einsum('ni,ni->n', y, z) / (k - 1)
-    
-    # conbine the covariance matrix elements into a 3x3 matrix
-    covs = np.array([[xx, xy, xz],
-                     [xy, yy, yz],
-                     [xz, yz, zz]]).transpose(2, 0, 1)
-
+    # Compute normals as the eigenvector corresponding to the smallest eigenvalue
     _, eigvecs = np.linalg.eigh(covs)
+    normals = eigvecs[:, :, 0]
+    # t6 = time.time()
+    # print(f"num points: {n}")
+    # print(f"KDTree query time: {(t2 - t1) * 1000:.2f} ms")
+    # print(f"Compute cross time: {(t3 - t2) * 1000:.2f} ms")
+    # print(f"sum ppt time: {(t4 - t3) * 1000:.2f} ms")
+    # print(f"compute mean cov time: {(t5 - t4) * 1000:.2f} ms")
+    # print(f"compute normal time: {(t6 - t5) * 1000:.2f} ms")
+    # Filter out points with too few neighbors
 
-    # get the normal from the smallest eigenvector
-    normals = eigvecs[:, :, 0]  # shape: (N, 3)
-    return normals, covs, means
+    return normals
 
 
 

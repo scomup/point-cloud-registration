@@ -1,8 +1,11 @@
 import numpy as np
 import time
-from point_cloud_registration import ICP, PlaneICP, NDT, VPlaneICP, voxel_filter, estimate_normals, expSO3
-import open3d as o3d
-import q3dviewer as q3d
+from point_cloud_registration import ICP, PlaneICP, NDT, VPlaneICP, voxel_filter, estimate_normals, KDTree, estimate_norm_with_tree
+try:
+    import open3d as o3d
+except ImportError:
+    print("To compare with Open3D, please install Open3D first by using 'pip install open3d")
+    exit(1)
 
 from test_data import generate_test_data
 
@@ -16,10 +19,16 @@ def test_icp(map_points, scan_points, max_iter, tol, max_dist):
 
 
 def test_ppicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size):
+
+    kdtree = KDTree(map_points)
+    normal = estimate_norm_with_tree(map_points, kdtree)
+
     start_time = time.time()
-    icp = PlaneICP(
-        voxel_size=voxel_size, max_iter=max_iter, max_dist=max_dist, tol=tol)
-    icp.set_target(map_points)
+    icp = PlaneICP(voxel_size=voxel_size,
+                   max_iter=max_iter,
+                   max_dist=max_dist,
+                   tol=tol)
+    icp.set_target(map_points, kdtree, normal)
     T_new = icp.align(scan_points, init_T=np.eye(4))
     elapsed_time = time.time() - start_time
     return T_new, elapsed_time
@@ -62,12 +71,12 @@ def test_open3d_icp(map_points, scan_points, max_iter, tol, max_dist):
 
 
 def test_open3d_ppicp(map_points, scan_points, max_iter, tol, max_dist, k):
-    start_time = time.time()
     source = o3d.geometry.PointCloud()
     target = o3d.geometry.PointCloud()
     source.points = o3d.utility.Vector3dVector(scan_points)
     target.points = o3d.utility.Vector3dVector(map_points)
     target.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN(knn=k))
+    start_time = time.time()
     result = o3d.pipelines.registration.registration_icp(
         source, target, max_correspondence_distance=max_dist,
         estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPlane(),
@@ -153,7 +162,7 @@ if __name__ == '__main__':
     map_points, scan_points = generate_test_data()
 
     # Parameters (consistent with C++ implementation)
-    max_iter = 10  # Maximum iterations for ICP and NDT
+    max_iter = 30  # Maximum iterations for ICP and NDT
     tol = 1e-3  # Tolerance for convergence
     voxel_size = 1  # Voxel size
     max_dist = voxel_size * 2  # Maximum correspondence distance

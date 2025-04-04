@@ -1,8 +1,11 @@
-import q3dviewer as q3d
 from point_cloud_registration.voxel import VoxelGrid, color_by_voxel
 import numpy as np
 from benchmark.test_data import generate_test_data
-
+try:
+    import q3dviewer as q3d
+except ImportError:
+    print("To visualize the results, please install q3dviewer first by using 'pip install q3dviewer'")
+    exit(1)
 
 
 if __name__ == '__main__':
@@ -24,9 +27,15 @@ if __name__ == '__main__':
     viewer = q3d.Viewer(name='example')
     # add all items to viewer
     viewer.add_items({
-        'grid': q3d.GridItem(size=10, spacing=1),
-        'scan': q3d.CloudItem(size=0.01, alpha=0.5, point_type='SPHERE', depth_test=True),
-        'norm': q3d.LineItem(width=2, color='#00ff00', line_type='LINES')})
+        'grid': q3d.GridItem(size=10, 
+                             spacing=1),
+        'scan': q3d.CloudItem(size=2, 
+                              alpha=0.5, 
+                              point_type='PIXEL', 
+                              depth_test=True),
+        'norm': q3d.LineItem(width=2, 
+                             color='lime', 
+                             line_type='LINES')})
     
     color_points = color_by_voxel(points, voxel_size)
     viewer['scan'].set_data(color_points)

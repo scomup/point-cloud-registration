@@ -2,7 +2,7 @@ import numpy as np
 from point_cloud_registration.registration import Registration
 from point_cloud_registration.math_tools import transform_points, skew, skew_time_vector
 from point_cloud_registration.kdtree import KDTree
-from point_cloud_registration.estimate_normals import estimate_norm_cov_mean_with_tree
+from point_cloud_registration.estimate_normals import estimate_norm_with_tree
 
 
 class PlaneICP(Registration):
@@ -11,11 +11,15 @@ class PlaneICP(Registration):
         self.voxel_size = voxel_size
         self.max_dist = max_dist
 
-    def set_target(self, target, k=6):
+    def set_target(self, target, kdree=None, norm=None):
         self.target = target.astype(np.float32)
-        self.kdtree = KDTree(target)
-        self.normal, _, _ = estimate_norm_cov_mean_with_tree(
-            target, self.kdtree, k=k)
+        if kdree is None or norm is None:
+            self.kdtree = KDTree(target)
+            self.normal = estimate_norm_with_tree(
+                target, self.kdtree)
+        else:
+            self.kdtree = kdree
+            self.normal = norm
 
     def calc_H_g_e2(self, cur_T, source):
         """

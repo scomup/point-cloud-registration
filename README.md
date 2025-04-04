@@ -1,7 +1,6 @@
 # Point Cloud Registration  
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PyPI version](https://badge.fury.io/py/point-cloud-registration.svg?cache=1)](https://pypi.org/project/point-cloud-registration/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![PyPI version](https://badge.fury.io/py/point-cloud-registration.svg?cache=1)](https://pypi.org/project/point-cloud-registration/)
 
 `point-cloud-registration` is a **pure Python**, **lightweight**, and **fast** point cloud registration library.  
 It outperforms PCL and Open3D's registration in speed while relying **only on NumPy** for computations.
@@ -11,20 +10,31 @@ It outperforms PCL and Open3D's registration in speed while relying **only on Nu
 ✅ **Fast & Lightweight** – Optimized algorithms with minimal overhead  
 ✅ **NumPy-based API** – Seamless integration with scientific computing workflows  
 
-The following registration algorithms are supported, with our **pure Python** `point-cloud-registration` being **even faster than the C++** versions of PCL and Open3D (with C++ & Python wrappers).
+The following registration algorithms are supported, with our **pure Python** `point-cloud-registration` being **even faster than the C++** versions of PCL and Open3D (C++ & Python wrappers).
 
-### Current support algorithm and Speed Comparison
+### Current Support Algorithm and Speed Comparison
 
-| Method                         | Our (sec) | Open3D (sec) | PCL (sec) |
-|-------------------------------|-----------|--------------|-----------|
-| Point-to-Point ICP               | 16.35     | 21.76        | 16.22     |
-| Point-to-Plane ICP               | 5.55      | 25.71        | 60.00     |
-| Voxelized Point-to-Plane ICP     | 3.48      | N/A          | N/A       |
-| Normal Distributions Transform (NDT) | 9.32         | N/A          | 37.51     |
+| Method                          | Our (sec) | Open3D (sec) | PCL (sec) |
+|---------------------------------|-----------|--------------|-----------|
+| Point-to-Point ICP              | **0.641** | 1.269        | 8.69      |
+| Point-to-Plane ICP [^1]            | **0.522** | 0.710        | 6.64      |
+| Voxelized Point-to-Plane ICP    | **0.640** | N/A          | N/A       |
+| Normal Distributions Transform (NDT) | **0.872** | N/A          | 19.8      |
+| Normal Estimation               | 2.4111    | **1.343**    | 2.68      |
 
 ---
 
-**Note**: The above times are based on a dataset with 400,000 points. The speed varies depending on hardware and dataset characteristics.
+[^1]: without normal estimation
+
+**Note**: The above times are based on the test data in `data/B-01.pcd` with over 1,000,000 points, licensed under CC BY 4.0. For more information, see `data/README.md`.  
+You can benchmark it yourself using the following commands:
+```bash
+cd benchmark
+python3 speed_test_comparison.py # Compare our implementation with Open3D
+mkdir build && cd build
+cmake .. && make
+./speed_test_comparison # Compare with PCL
+```
 
 **For more details, check the documentation.*
 
@@ -35,7 +45,7 @@ Install via pip:
 
 ```bash
 pip install point-cloud-registration
-pip install q3dviewer # (optional) for visual demo
+pip install q3dviewer==1.1.4 # (optional) for visual demo
 ```
 
 ## Usage  
@@ -44,13 +54,13 @@ pip install q3dviewer # (optional) for visual demo
 #!/usr/bin/env python3
 
 import numpy as np
-from point_cloud_registration import VoxelPoint2PlaneICP
+from point_cloud_registration import ICP, PlaneICP, NDT, VPlaneICP
 
 # Example point clouds
 target = np.random.rand(100, 3)  # Nx3 point numpy array
 scan = np.random.rand(80, 3)    # Mx3 point numpy array
 
-icp = VoxelPoint2PlaneICP(voxel_size=0.5, max_iter=100, max_dist=2, tol=1e-3)
+icp = VPlaneICP(voxel_size=0.5, max_iter=100, max_dist=2, tol=1e-3)
 icp.set_target(target)  # Set the target point cloud
 T_new = icp.align(scan, init_T=np.eye(4))  # Fit the scan to the target
 print("Estimated Transform matrix:\n", T_new)
