@@ -25,11 +25,11 @@ pip install q3dviewer==1.1.4 # (optional) for visual demo
 
 | Method                          | Our (sec) | Open3D (sec) | PCL (sec) |
 |---------------------------------|-----------|--------------|-----------|
-| Point-to-Point ICP              | **0.641** | 1.269        | 8.69      |
-| Point-to-Plane ICP [^2]         | **0.522** | 0.710        | 6.64      |
-| Voxelized Point-to-Plane ICP    | **0.640** | N/A          | N/A       |
-| Normal Distributions Transform (NDT) | **0.872** | N/A          | 19.8      |
-| Normal Estimation               | 2.4111    | **1.343**    | 2.68      |
+| Point-to-Point ICP              | **0.502** | 1.511        | 0.931      |
+| Point-to-Plane ICP [^2]         | **0.334** | 0.677        | 0.835      |
+| Voxelized Point-to-Plane ICP    | **0.420** | N/A          | N/A       |
+| Normal Distributions Transform (NDT) | **0.803** | N/A          | 1.923      |
+| Normal Estimation               | 2.201    | **1.708**    | 2.048      |
 
 ---
 

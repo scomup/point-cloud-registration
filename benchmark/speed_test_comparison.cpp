@@ -5,6 +5,7 @@
 #include <pcl/point_types.h>
 #include <pcl/registration/icp.h>
 #include <pcl/registration/ndt.h>
+#include <pcl/filters/random_sample.h>
 
 #include <Eigen/Dense>
 #include <chrono>
@@ -186,7 +187,7 @@ double test_pcl_voxel_filter(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,
 
 int main() {
   // File path for the map point cloud
-  std::string map_file = "/home/liu/coreset/data/B-01.pcd";
+  std::string map_file = "/home/liu/workspace/point-cloud-registration/data/B-01.pcd";
 
   // Load map point cloud
   pcl::PointCloud<pcl::PointXYZ>::Ptr map_cloud(
@@ -209,9 +210,27 @@ int main() {
     scan_cloud->points.emplace_back(transformed_p.x(), transformed_p.y(),
                                     transformed_p.z());
   }
+  /*
+      num_points = 100000
+    indices = np.random.choice(scan.shape[0], num_points, replace=False)
+    scan = scan[indices]
+
+*/
   scan_cloud->width = scan_cloud->points.size();
   scan_cloud->height = 1;
   scan_cloud->is_dense = true;
+
+  // Randomly sample the scan cloud
+  int num_points = 100000;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr sampled_scan_cloud(
+      new pcl::PointCloud<pcl::PointXYZ>());
+  pcl::RandomSample<pcl::PointXYZ> random_sample;
+  random_sample.setInputCloud(scan_cloud);
+  random_sample.setSample(num_points);
+  random_sample.filter(*sampled_scan_cloud);
+
+  // Replace scan_cloud with sampled_scan_cloud for further processing
+  scan_cloud = sampled_scan_cloud;
 
   // Compute normals for the map cloud
   pcl::PointCloud<pcl::PointNormal>::Ptr map_cloud_with_normals =
