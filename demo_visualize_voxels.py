@@ -4,7 +4,7 @@ from benchmark.test_data import generate_test_data
 try:
     import q3dviewer as q3d
 except ImportError:
-    print("To visualize the results, please install q3dviewer first by using 'pip install q3dviewer==1.1.4'")
+    print("To visualize the results, please install q3dviewer first by using 'pip install q3dviewer==1.1.5'")
     exit(1)
 
 
@@ -30,7 +30,8 @@ if __name__ == '__main__':
         'grid': q3d.GridItem(size=10, 
                              spacing=1),
         'scan': q3d.CloudItem(size=2, 
-                              alpha=0.5, 
+                              alpha=0.5,
+                              color_mode='RGB',
                               point_type='PIXEL', 
                               depth_test=True),
         'norm': q3d.LineItem(width=2, 

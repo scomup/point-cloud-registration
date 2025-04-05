@@ -175,24 +175,31 @@ class VoxelGrid:
         return query_data
 
 
+
 def color_by_voxel(points, voxel_size):
     """
-    given a set of points, color them based on the voxel they belong to
+    Faster coloring of point cloud by voxel using hash table
     """
     keys = get_keys(points, voxel_size)
-    # Create random colors for unique keys
-    unique_keys = np.unique(keys)
-    np.random.seed(42)  # Set seed for reproducibility
-    colors = {key: np.random.randint(0, 256, size=3) for key in unique_keys}
+    unique_ids, inverse_indices = np.unique(keys, return_inverse=True)
 
-    # Assign colors to points based on their keys
-    point_colors = np.array([colors[key] for key in keys])
-    rgb = point_colors[:, 0] << 24 | point_colors[:,
-                                                  1] << 16 | point_colors[:, 2] << 8
+    # Generate colors per unique voxel
+    np.random.seed(42)
+    colors = np.random.randint(0, 256, size=(len(unique_ids), 3), dtype=np.uint8)
+
+    point_colors = colors[inverse_indices]
+
+    # Convert to packed RGB
+    rgb = (
+        point_colors[:, 0].astype(np.uint32) << 16 |
+        point_colors[:, 1].astype(np.uint32) << 8 |
+        point_colors[:, 2].astype(np.uint32)
+    )
+
+    # Pack into structured array
     data_type = [('xyz', '<f4', (3,)), ('irgb', '<u4')]
-    point_colors = np.rec.fromarrays(
-        [points, rgb], dtype=data_type)
-    return point_colors
+    result = np.rec.fromarrays([points.astype(np.float32), rgb], dtype=data_type)
+    return result
 
 
 def voxel_filter(points, voxel_size):

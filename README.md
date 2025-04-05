@@ -18,7 +18,7 @@ Install via pip:
 
 ```bash
 pip install point-cloud-registration
-pip install q3dviewer==1.1.4 # (optional) for visual demo
+pip install q3dviewer==1.1.5 # (optional) for visual demo
 ```
 
 ### Current Support Algorithm and Speed Comparison [^1]
@@ -97,11 +97,13 @@ python3 demo_visualize_voxels.py
 
 #### Try Point Cloud Registration
 
-Test the Point Cloud Registration algorithm with a sample demo:
+Explore our Cloud Registration algorithms using a sample GUI. You can experiment with different settings:
 
 ```bash
 python3 demo_matching.py
 ```
+
+![demo](imgs/demo.png)
 
 ### Comparison of Registration Methods
 

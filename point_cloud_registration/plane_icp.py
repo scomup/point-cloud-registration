@@ -6,17 +6,18 @@ from point_cloud_registration.estimate_normals import estimate_norm_with_tree
 
 
 class PlaneICP(Registration):
-    def __init__(self, voxel_size=1.0, max_iter=30, max_dist=2, tol=1e-3):
+    def __init__(self, voxel_size=1.0, max_iter=30, max_dist=2, tol=1e-3, k=15):
         super().__init__(max_iter=max_iter, tol=tol)
         self.voxel_size = voxel_size
         self.max_dist = max_dist
+        self.k = k
 
     def set_target(self, target, kdree=None, norm=None):
         self.target = target.astype(np.float32)
         if kdree is None or norm is None:
             self.kdtree = KDTree(target)
             self.normal = estimate_norm_with_tree(
-                target, self.kdtree)
+                target, self.kdtree, self.k)
         else:
             self.kdtree = kdree
             self.normal = norm
