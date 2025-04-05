@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "point-cloud-registration"
-version = "0.1.0"
+version = "1.0.4"
 description = "A point cloud registration library"
 authors = ["Liu Yang <scomup@gmail.com>"]
 
