@@ -6,7 +6,7 @@ from point_cloud_registration.estimate_normals import estimate_norm_with_tree
 
 
 class PlaneICP(Registration):
-    def __init__(self, voxel_size=0.5, max_iter=100, max_dist=2, tol=1e-6):
+    def __init__(self, voxel_size=1.0, max_iter=30, max_dist=2, tol=1e-3):
         super().__init__(max_iter=max_iter, tol=tol)
         self.voxel_size = voxel_size
         self.max_dist = max_dist

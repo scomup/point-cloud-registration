@@ -13,7 +13,7 @@ def svd_sqrt(A):
     return B
 
 
-def get_keys(points, voxel_size=1):
+def get_keys(points, voxel_size=1.0):
     """
     a faster hash for 3d points
     """

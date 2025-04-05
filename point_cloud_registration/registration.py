@@ -3,7 +3,7 @@ from point_cloud_registration.math_tools import plus
 import time
 
 class Registration:
-    def __init__(self, max_iter=100, tol=1e-6):
+    def __init__(self, max_iter=30, tol=1e-3):
         """
         Base class for point cloud registration methods.
         :param max_iter: Maximum number of iterations.

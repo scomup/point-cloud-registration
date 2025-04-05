@@ -18,7 +18,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 data_dir = os.path.join(current_dir, "..", "data")
 test_file = os.path.join(data_dir, "B-01.pcd")
 
-def generate_test_data():
+def generate_test_data(so3=np.zeros(3), t=np.array([0, 0, 0.3]), num_points=100000):
     # Generate synthetic data for testing
     try:
         map = q3d.load_pcd(test_file)
@@ -30,11 +30,12 @@ def generate_test_data():
         map = q3d.load_pcd(test_file)
     # map, _ = q3d.load_pcd("/home/liu/.ros/lidar_camera_calib/clouds/0.pcd")
     map = map['xyz']
-    R = expSO3(np.array([0.0, 0.0, 0.0]))
-    t = np.array([0.0, 0.0, 0.3])
+    R = expSO3(np.array(so3))
     scan = (R @ map.T).T + t
     # use numpy to randomly sample points
-    num_points = 100000
+    if num_points > scan.shape[0]:
+        num_points = scan.shape[0]
+    # randomly sample points
     indices = np.random.choice(scan.shape[0], num_points, replace=False)
     scan = scan[indices]
     # add noise

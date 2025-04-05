@@ -58,7 +58,7 @@ from point_cloud_registration import ICP, PlaneICP, NDT, VPlaneICP
 target = np.random.rand(100, 3)  # Nx3 point numpy array
 scan = np.random.rand(80, 3)    # Mx3 point numpy array
 
-icp = VPlaneICP(voxel_size=0.5, max_iter=100, max_dist=2, tol=1e-3)
+icp = VPlaneICP(voxel_size=0.5, max_iter=30, max_dist=2, tol=1e-3)
 icp.set_target(target)  # Set the target point cloud
 T_new = icp.align(scan, init_T=np.eye(4))  # Fit the scan to the target
 print("Estimated Transform matrix:\n", T_new)

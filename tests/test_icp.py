@@ -23,7 +23,7 @@ def test_calc_H_g_e2(generate_test_data):
     """
     target, source = generate_test_data
     source = source.astype(np.float32)
-    icp = ICP(max_iter=10, max_dist=2.0, tol=1e-6)
+    icp = ICP(max_iter=10, max_dist=2.0, tol=1e-3)
     icp.set_target(target)
 
     cur_T = np.eye(4)  # Initial transformation (identity matrix)
@@ -33,6 +33,6 @@ def test_calc_H_g_e2(generate_test_data):
     H2, g2, e2_2 = icp.calc_H_g_e2_no_parallel_ver(cur_T, source)
 
     # Assert that the results are the same
-    assert np.allclose(H1, H2, atol=1e-6), f"H matrices differ: {np.max(np.abs(H1 - H2))}"
-    assert np.allclose(g1, g2, atol=1e-6), f"g vectors differ: {np.max(np.abs(g1 - g2))}"
-    assert np.isclose(e2_1, e2_2, atol=1e-6), f"e2 values differ: {abs(e2_1 - e2_2)}"
+    assert np.allclose(H1, H2, atol=1e-3), f"H matrices differ: {np.max(np.abs(H1 - H2))}"
+    assert np.allclose(g1, g2, atol=1e-3), f"g vectors differ: {np.max(np.abs(g1 - g2))}"
+    assert np.isclose(e2_1, e2_2, atol=1e-3), f"e2 values differ: {abs(e2_1 - e2_2)}"

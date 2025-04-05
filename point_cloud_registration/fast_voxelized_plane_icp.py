@@ -7,7 +7,7 @@ from math_tools import makeRt, expSO3, makeT
 
 
 class FastVPlaneICP:
-    def __init__(self, voxel_size, max_iter=100, max_dist=2, tol=1e-6, N_target=1024, debug=True):
+    def __init__(self, voxel_size, max_iter=30, max_dist=2, tol=1e-3, N_target=1024, debug=True):
         self.num = 0
         self.voxels = VoxelGrid(voxel_size)
         self.max_iter = max_iter

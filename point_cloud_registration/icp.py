@@ -6,7 +6,7 @@ import time
 
 
 class ICP(Registration):
-    def __init__(self, max_iter=100, max_dist=2, tol=1e-6):
+    def __init__(self, max_iter=30, max_dist=2, tol=1e-3):
         super().__init__(max_iter=max_iter, tol=tol)
         self.max_dist = max_dist
         self.kdtree = None
