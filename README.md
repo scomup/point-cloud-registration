@@ -12,15 +12,6 @@ It outperforms PCL and Open3D's registration in speed while relying **only on Nu
 
 The following registration algorithms are supported, with our **pure Python** `point-cloud-registration` being **even faster than the C++** versions of PCL and Open3D (C++ & Python wrappers).
 
-## Installation  
-
-Install via pip:  
-
-```bash
-pip install point-cloud-registration
-pip install q3dviewer==1.1.5 # (optional) for visual demo
-```
-
 ### Current Support Algorithm and Speed Comparison [^1]
 
 | Method                          | Our (sec) | Open3D (sec) | PCL (sec) |
@@ -34,6 +25,15 @@ pip install q3dviewer==1.1.5 # (optional) for visual demo
 ---
 
 [^1]: **Note**: The above times are based on the test data in `data/B-01.pcd` with over 1,000,000 points, licensed under CC BY 4.0. For more information, see `data/README.md`.  
+
+## Installation  
+
+Install via pip:  
+
+```bash
+pip install point-cloud-registration
+pip install q3dviewer==1.1.5 # (optional) for visual demo
+```
 
 You can benchmark it yourself using the following commands:
 ```bash
