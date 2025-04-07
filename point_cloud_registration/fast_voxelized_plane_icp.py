@@ -1,3 +1,16 @@
+"""
+Copyright 2025 Liu Yang
+Distributed under MIT license. See LICENSE for more information.
+
+TODO (liu): Try using Caratheodory's theorem to select a coreset of points to speed up VPlaneICP or PlaneICP.
+This file is my Python implementation of Caratheodory's theorem-based algorithms for exact point 
+cloud downsampling.
+
+Current problems:
+1. Only works when the error is very small.
+2. May not work for extracted point sets with small sizes.
+"""
+
 import numpy as np
 import q3dviewer as q3d
 from voxel import VoxelGrid

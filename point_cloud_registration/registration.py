@@ -1,6 +1,11 @@
+"""
+Copyright 2025 Liu Yang
+Distributed under MIT license. See LICENSE for more information.
+"""
+
 import numpy as np
 from point_cloud_registration.math_tools import plus
-import time
+
 
 class Registration:
     def __init__(self, max_iter=30, tol=1e-3):
@@ -11,14 +16,21 @@ class Registration:
         """
         self.max_iter = max_iter
         self.tol = tol
-        self.target = None
+        self._is_target_set = False
+
+    def is_target_set(self):
+        """
+        Check if the target point cloud is set.
+        :return: True if target is set, False otherwise.
+        """
+        return self._is_target_set
 
     def set_target(self, target):
         """
         Set the target point cloud.
         :param target: Target point cloud (Nx3 array).
         """
-        self.target = target
+        self._is_target_set = True
         raise NotImplementedError("set_target is not implemented.")
 
     def update_target(self, target):

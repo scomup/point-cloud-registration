@@ -1,8 +1,12 @@
+"""
+Copyright 2025 Liu Yang
+Distributed under MIT license. See LICENSE for more information.
+"""
+
 import numpy as np
 from point_cloud_registration.registration import Registration
 from point_cloud_registration.math_tools import skews, transform_points, skew2, skew
 from point_cloud_registration.kdtree import KDTree
-import time
 
 
 class ICP(Registration):
@@ -16,6 +20,7 @@ class ICP(Registration):
         target = target.astype(np.float32)
         self.kdtree = KDTree(target)
         self.target = target
+        self._is_target_set = True
 
     def calc_H_g_e2(self, cur_T, source):
         """
@@ -25,7 +30,7 @@ class ICP(Registration):
         :param source: Source point cloud (Nx3 array).
         :return: Hessian (6x6 array), gradient (6 array), squared error (scalar).
         """
-        if self.kdtree is None:
+        if self.is_target_set() is False:
             raise ValueError("Target is not set.")
 
         src_trans = transform_points(cur_T.astype(np.float32), source)

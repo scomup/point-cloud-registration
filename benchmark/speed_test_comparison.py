@@ -18,14 +18,13 @@ def test_icp(map_points, scan_points, max_iter, tol, max_dist):
     return T_new, elapsed_time
 
 
-def test_ppicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size):
+def test_ppicp(map_points, scan_points, max_iter, tol, max_dist):
 
     kdtree = KDTree(map_points)
     normal = estimate_norm_with_tree(map_points, kdtree)
 
     start_time = time.time()
-    icp = PlaneICP(voxel_size=voxel_size,
-                   max_iter=max_iter,
+    icp = PlaneICP(max_iter=max_iter,
                    max_dist=max_dist,
                    tol=tol)
     icp.set_target(map_points, kdtree, normal)
@@ -191,7 +190,7 @@ if __name__ == '__main__':
     print("-" * 55)
     _, time_icp = test_icp(map_points, scan_points, max_iter, tol, max_dist)
     print(f"{'Our ICP':<35}{time_icp:>20.6f}")
-    _, time_ppicp = test_ppicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size)
+    _, time_ppicp = test_ppicp(map_points, scan_points, max_iter, tol, max_dist)
     print(f"{'Our Point-to-Plane ICP':<35}{time_ppicp:>20.6f}")
     _, time_ndt = test_ndt(map_points, scan_points, max_iter, tol, max_dist, voxel_size)
     print(f"{'Our NDT':<35}{time_ndt:>20.6f}")

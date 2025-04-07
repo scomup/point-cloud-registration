@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from point_cloud_registration.voxel import VoxelGrid, color_by_voxel
 import numpy as np
 from benchmark.test_data import generate_test_data

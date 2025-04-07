@@ -1,4 +1,7 @@
 """
+Copyright 2025 Liu Yang
+Distributed under MIT license. See LICENSE for more information.
+
 This file originates from scomup/MathematicalRobotics and is licensed under the MIT License.
 See the following link for details:
 https://github.com/scomup/MathematicalRobotics/blob/main/mathR/utilities/math_tools.py

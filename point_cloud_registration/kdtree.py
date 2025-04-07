@@ -1,3 +1,8 @@
+"""
+Copyright 2025 Liu Yang
+Distributed under MIT license. See LICENSE for more information.
+"""
+
 USE_KDTREE = "PYKDTree"  # Set to "PYKDTree", "SMALL_GICP", or "SCIPY" based on your preference
 
 # We find that PyKDTree is faster than SMALL_GICP or SCIPY but comes with an LGPL3.0 license.

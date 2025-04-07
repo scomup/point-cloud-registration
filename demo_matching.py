@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from point_cloud_registration import ICP, PlaneICP, NDT, VPlaneICP
 
 from point_cloud_registration import makeRt, expSO3, transform_points, makeT, color_by_voxel
@@ -12,30 +14,31 @@ except ImportError:
     exit(0)
 
 
-class CMMViewer(q3d.Viewer):
+class DEMOViewer(q3d.Viewer):
     """
     This class is a subclass of Viewer, which is used to create a cloud movie maker.
     """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.add_items({
             'grid': q3d.GridItem(size=10, spacing=1),
-            'map': q3d.CloudItem(size=2, 
-                              alpha=0.3, 
-                              point_type='PIXEL', 
-                              color_mode='RGB',
-                              color='r',
-                              depth_test=False),
-            'scan': q3d.CloudItem(size=0.05, alpha=1, point_type='SPHERE', \
+            'map': q3d.CloudItem(size=2,
+                                 alpha=0.3,
+                                 point_type='PIXEL',
+                                 color_mode='RGB',
+                                 color='r',
+                                 depth_test=False),
+            'scan': q3d.CloudItem(size=0.05, alpha=1, point_type='SPHERE',
                                   color_mode='FLAT', color='lime', depth_test=False),
             'norm': q3d.LineItem(width=2, color='lime', line_type='LINES')})
 
+        self.method = None
         self.map, self.scan_org = generate_test_data(t=np.array([0, 0, 0]))
         self.scan = self.scan_org.copy()
         color_points = color_by_voxel(self.map, 2)
         self['map'].set_data(color_points)
         self['scan'].set_data(self.scan)
-
 
     def add_control_panel(self, main_layout):
         """
@@ -43,6 +46,11 @@ class CMMViewer(q3d.Viewer):
         """
         # Create a vertical layout for the settings
         setting_layout = q3d.QVBoxLayout()
+
+        # Create a container widget for the layout
+        setting_widget = q3d.QWidget()
+        setting_widget.setLayout(setting_layout)
+        setting_widget.setFixedWidth(250)  # Set the fixed width for the settings panel
 
         # Add a label for the settings
         group_box = q3d.QGroupBox("Matching Settings")
@@ -53,7 +61,8 @@ class CMMViewer(q3d.Viewer):
         self.combo_items.addItems(['ICP', 'PlaneICP', 'NDT', 'VPlaneICP'])
         self.combo_items.setCurrentIndex(3)
         self.combo_items.setToolTip("Select the matching method")
-        self.combo_items.setStyleSheet("QComboBox { background-color: lightgray; }")
+        self.combo_items.setStyleSheet(
+            "QComboBox { background-color: lightgray; }")
         self.combo_items.currentIndexChanged.connect(self.update_method)
         group_layout.addWidget(self.combo_items)
 
@@ -81,7 +90,6 @@ class CMMViewer(q3d.Viewer):
 
         group_box.setLayout(group_layout)
         setting_layout.addWidget(group_box)
-
 
         # Add a group for initial pose settings
         group_box_pose = q3d.QGroupBox("Initial Pose Settings")
@@ -125,22 +133,22 @@ class CMMViewer(q3d.Viewer):
         group_box_pose.setLayout(group_layout_pose)
         setting_layout.addWidget(group_box_pose)
 
-
         self.button_matching = q3d.QPushButton("Matching")
         self.button_matching.setToolTip("Start matching")
-        self.button_matching.setStyleSheet("QPushButton { background-color: lightgreen; }")
+        self.button_matching.setStyleSheet(
+            "QPushButton { background-color: lightgreen; }")
         self.button_matching.clicked.connect(self.do_matching)
         setting_layout.addWidget(self.button_matching)
 
-
         setting_layout.addStretch()
-        # Add the settings layout to the main layout
-        main_layout.addLayout(setting_layout)
+        # Add the settings widget to the main layout
+        main_layout.addWidget(setting_widget)
 
     def do_matching(self):
-
-        self.update_method()
-        self.method.set_target(self.map)
+        if self.method is None:
+            self.update_method()
+        if self.method.is_target_set() is False:
+            self.method.set_target(self.map)
         T_new = self.method.align(self.scan, init_T=np.eye(4))
         self.scan = transform_points(T_new, self.scan)
         self['scan'].set_data(self.scan)
@@ -152,7 +160,7 @@ class CMMViewer(q3d.Viewer):
         # Create a text edit widget to show the camera parameters
         text_edit = QTextEdit()
         text_edit.setReadOnly(True)
-        
+
         quat = q3d.matrix_to_quaternion(T_new[:3, :3])
         trans = T_new[:3, 3]
         # Format the camera parameters
@@ -168,7 +176,6 @@ class CMMViewer(q3d.Viewer):
         msg_box.setLayout(layout)
         msg_box.exec()
 
-
     def update_voxel_size(self):
         """
         Update the voxel size based on the spin box value.
@@ -177,7 +184,7 @@ class CMMViewer(q3d.Viewer):
         map_color = color_by_voxel(self.map, voxel_size)
         self['map'].set_color_mode('RGB')
         self['map'].set_data(map_color)
-        
+
     def update_method(self):
         """
         Update the matching method based on the selected index.
@@ -229,25 +236,10 @@ class CMMViewer(q3d.Viewer):
         # Apply the transformation to the cloud item
         self['scan'].set_data(self.scan)
 
+
 if __name__ == '__main__':
 
-    # Generate N x 3 points
-    # icp = PlaneICP(voxel_size=1.0, max_iter=30, max_dist=100, tol=1e-5)
-    # icp.set_target(map)
-    # T_new = icp.align(scan, init_T=T, verbose=True)
-    # # icp.max_dist = 0.1
-    # # T_new = icp.align(scan, init_T=T_new, verbose=True)
-    # R_new, t_new = makeRt(T_new)
-# 
-    # scan_new = transform_points(T_new, scan)
-# 
-    # print(T_new)
-    # scan_new = (R_new @ scan.T).T + t_new
-
     app = q3d.QApplication([])
-
-    # create viewer
-    viewer = CMMViewer(name='example')
+    viewer = DEMOViewer(name='Demo Matching')
     viewer.show()
     app.exec()
-

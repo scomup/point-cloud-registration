@@ -1,9 +1,17 @@
 """
-Python implementation of Caratheodory's theorem-based algorithms for exact point cloud downsampling.
+TODO (liu): Try using Caratheodory's theorem to select a coreset of points to speed up VPlaneICP or PlaneICP.
+This file is my Python implementation of Caratheodory's theorem-based algorithms for exact point 
+cloud downsampling.
+
+Current problems:
+1. Only works when the error is very small.
+2. May not work for extracted point sets with small sizes.
 
 Based on:
 K. Koide, "Exact Point Cloud Downsampling for Fast and Accurate Global Trajectory Optimization,"
 arXiv preprint arXiv:2307.02948v3, 2023. https://arxiv.org/abs/2307.02948
+The original C++ implementation can be found at:
+https://github.com/koide3/caratheodory2/blob/main/src/caratheodory.cpp
 
 This module includes:
 - Caratheodory's algorithm for finding exact coresets.

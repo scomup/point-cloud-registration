@@ -1,3 +1,8 @@
+"""
+Copyright 2025 Liu Yang
+Distributed under MIT license. See LICENSE for more information.
+"""
+
 import numpy as np
 from point_cloud_registration.registration import Registration
 from point_cloud_registration.math_tools import transform_points, skew, skew_time_vector
@@ -6,9 +11,8 @@ from point_cloud_registration.estimate_normals import estimate_norm_with_tree
 
 
 class PlaneICP(Registration):
-    def __init__(self, voxel_size=1.0, max_iter=30, max_dist=2, tol=1e-3, k=15):
+    def __init__(self, max_iter=30, max_dist=2, tol=1e-3, k=15):
         super().__init__(max_iter=max_iter, tol=tol)
-        self.voxel_size = voxel_size
         self.max_dist = max_dist
         self.k = k
 
@@ -21,6 +25,7 @@ class PlaneICP(Registration):
         else:
             self.kdtree = kdree
             self.normal = norm
+        self._is_target_set = True
 
     def calc_H_g_e2(self, cur_T, source):
         """
@@ -30,11 +35,10 @@ class PlaneICP(Registration):
         :param source: Source point cloud (Nx3 array).
         :return: Hessian (6x6 array), gradient (6 array), squared error (scalar).
         """
-        if self.kdtree is None:
+        if self.is_target_set() is False:
             raise ValueError("Target is not set.")
         R = cur_T[:3, :3]
         src_trans = transform_points(cur_T.astype(np.float32), source)
-        # if the dx is large, we research the nearest points
         dist, idx = self.kdtree.query(src_trans)
         mask = dist < self.max_dist
         idx = idx[mask]

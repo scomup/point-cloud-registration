@@ -1,10 +1,12 @@
+"""
+Copyright 2025 Liu Yang
+Distributed under MIT license. See LICENSE for more information.
+"""
+
 import numpy as np
-from collections import defaultdict
+# from collections import defaultdict
 from point_cloud_registration.kdtree import KDTree
-from operator import itemgetter, attrgetter
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
-# import xxhash
 
 def svd_sqrt(A):
     U, S, Vt = np.linalg.svd(A)  # SVD decomposition

@@ -1,3 +1,8 @@
+"""
+Copyright 2025 Liu Yang
+Distributed under MIT license. See LICENSE for more information.
+"""
+
 import numpy as np
 from point_cloud_registration.registration import Registration
 from point_cloud_registration.voxel import VoxelGrid
@@ -15,9 +20,10 @@ class NDT(Registration):
         self.voxels = VoxelGrid(self.voxel_size)
         self.voxels.set_points(target)
         self.voxels.calc_icov() # need for ndt
+        self._is_target_set = True
 
     def calc_H_g_e2(self, cur_T, source):
-        if self.voxels is None:
+        if self.is_target_set() is False:
             raise ValueError("Target is not set.")
 
         R = cur_T[:3, :3]

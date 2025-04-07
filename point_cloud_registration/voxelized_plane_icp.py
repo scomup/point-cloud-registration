@@ -1,3 +1,8 @@
+"""
+Copyright 2025 Liu Yang
+Distributed under MIT license. See LICENSE for more information.
+"""
+
 import numpy as np
 from point_cloud_registration.registration import Registration
 from point_cloud_registration.voxel import VoxelGrid
@@ -14,6 +19,7 @@ class VPlaneICP(Registration):
     def set_target(self, target):
         self.voxels = VoxelGrid(self.voxel_size)
         self.voxels.set_points(target)
+        self._is_target_set = True
 
     def calc_H_g_e2(self, cur_T, source):
         """
@@ -68,7 +74,7 @@ class VPlaneICP(Registration):
         the logic is the totally same as calc_H_g_e2.
         """
 
-        if self.voxels is None:
+        if self.is_target_set() is False:
             raise ValueError("Target is not set.")
         R = cur_T[:3, :3]
         src_trans = transform_points(cur_T.astype(np.float32), source)
