@@ -12,7 +12,6 @@ from point_cloud_registration.math_tools import skews, transform_points, skew, s
 class VPlaneICP(Registration):
     def __init__(self, voxel_size=1.0, max_iter=30, max_dist=2, tol=1e-3):
         super().__init__(max_iter=max_iter, tol=tol)
-        self.voxels = None
         self.voxel_size = voxel_size
         self.max_dist = max_dist
 
@@ -29,8 +28,6 @@ class VPlaneICP(Registration):
         :param source: Source point cloud (Nx3 array).
         :return: Hessian (6x6 array), gradient (6 array), squared error (scalar).
         """
-        if self.voxels is None:
-            raise ValueError("Target is not set.")
         R = cur_T[:3, :3]
         src_trans = transform_points(cur_T.astype(np.float32), source)
 

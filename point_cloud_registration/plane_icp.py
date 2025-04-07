@@ -35,8 +35,6 @@ class PlaneICP(Registration):
         :param source: Source point cloud (Nx3 array).
         :return: Hessian (6x6 array), gradient (6 array), squared error (scalar).
         """
-        if self.is_target_set() is False:
-            raise ValueError("Target is not set.")
         R = cur_T[:3, :3]
         src_trans = transform_points(cur_T.astype(np.float32), source)
         dist, idx = self.kdtree.query(src_trans)
@@ -77,9 +75,6 @@ class PlaneICP(Registration):
         This function is just for helping to understand the algorithm.
         the logic is the totally same as calc_H_g_e2.
         """
-
-        if self.kdtree is None:
-            raise ValueError("Target is not set.")
         R = cur_T[:3, :3]
         src_trans = transform_points(cur_T.astype(np.float32), source)
         dist, idx = self.kdtree.query(src_trans)

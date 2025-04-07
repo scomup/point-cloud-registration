@@ -77,6 +77,9 @@ class Registration:
         :param verbose: Print error at each iteration.
         :return: Final transformation (4x4 array).
         """
+        if self.is_target_set() is False:
+            raise ValueError("Target is not set.")
+
         source = source.astype(np.float32)
         cur_T = init_T
         # dx_norm = np.inf

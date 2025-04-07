@@ -13,7 +13,6 @@ class ICP(Registration):
     def __init__(self, max_iter=30, max_dist=2, tol=1e-3):
         super().__init__(max_iter=max_iter, tol=tol)
         self.max_dist = max_dist
-        self.kdtree = None
 
     def set_target(self, target):
         # target = target.astype(np.float32)
@@ -30,9 +29,6 @@ class ICP(Registration):
         :param source: Source point cloud (Nx3 array).
         :return: Hessian (6x6 array), gradient (6 array), squared error (scalar).
         """
-        if self.is_target_set() is False:
-            raise ValueError("Target is not set.")
-
         src_trans = transform_points(cur_T.astype(np.float32), source)
         dist, idx = self.kdtree.query(src_trans)
         mask = dist < self.max_dist
@@ -66,8 +62,6 @@ class ICP(Registration):
         This function is just for helping to understand the algorithm.
         the logic is the totally same as calc_H_g_e2.
         """
-        if self.kdtree is None:
-            raise ValueError("Target is not set.")
         src_trans = transform_points(cur_T, source)
         dist, idx = self.kdtree.query(src_trans.astype(np.float32))
         mask = dist < self.max_dist

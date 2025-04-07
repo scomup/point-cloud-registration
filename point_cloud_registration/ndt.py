@@ -12,7 +12,6 @@ from point_cloud_registration.math_tools import skews, transform_points, plus, s
 class NDT(Registration):
     def __init__(self, voxel_size=1.0, max_iter=30, max_dist=2, tol=1e-3):
         super().__init__(max_iter=max_iter, tol=tol)
-        self.voxels = None
         self.voxel_size = voxel_size
         self.max_dist = max_dist
 
@@ -23,9 +22,6 @@ class NDT(Registration):
         self._is_target_set = True
 
     def calc_H_g_e2(self, cur_T, source):
-        if self.is_target_set() is False:
-            raise ValueError("Target is not set.")
-
         R = cur_T[:3, :3]
         src_trans = transform_points(cur_T.astype(np.float32), source)
 
@@ -65,4 +61,45 @@ class NDT(Registration):
 
         e2 = np.einsum('ni,nij,nj->', diff, icov, diff)  # scalar
 
+        return H, g, e2
+
+
+    def calc_H_g_e2_no_parallel_ver(self, cur_T, source):
+        # calc_H_g_e2_no_parallel_ver
+        """
+        Note: This is a non-parallel version of calc_H_g_e2.
+        This function is just for helping to understand the algorithm.
+        the logic is the totally same as calc_H_g_e2.
+        """
+        R = cur_T[:3, :3]
+        src_trans = transform_points(cur_T.astype(np.float32), source)
+
+        # Query voxels (icov and mean)
+        query_data = self.voxels.query(src_trans, ['icov', 'mean'])
+        icov = query_data['icov']
+        means = query_data['mean']
+        dist = query_data['dist']
+        mask = dist < self.max_dist
+        means = means[mask]
+        icov = icov[mask]
+        #src_mask = source[mask]
+        src_trans = src_trans[mask]
+        H = np.zeros((6, 6))
+        g = np.zeros(6)
+        e2 = 0
+
+        for i in range(source.shape[0]):
+            J = np.zeros((3, 6))
+            # Jacobian of the transformation
+            J[:, :3] = np.eye(3)
+            # Jacobian of the rotation
+            J[:, 3:] = -R @ skew(source[i])
+            # residual
+            r = src_trans[i] - means[i]
+
+            if dist[i] > self.max_dist:
+                continue
+            H += J.T @ icov[i] @  J
+            g += J.T @ icov[i] @ r
+            e2 += r @ icov[i] @ r
         return H, g, e2

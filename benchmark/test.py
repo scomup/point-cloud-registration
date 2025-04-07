@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     t1 = time.time()
     t2 = time.time()
-    icp = PlaneICP(max_iter=max_iter, tol=tol, max_dist=max_dist)
+    icp = NDT(max_iter=max_iter, tol=tol, max_dist=max_dist)
     icp.set_target(map_points)
     t3 = time.time()
     T_new = icp.align(scan_points, init_T=np.eye(4), verbose=True)

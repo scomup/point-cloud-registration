@@ -4,8 +4,8 @@ This file is my Python implementation of Caratheodory's theorem-based algorithms
 cloud downsampling.
 
 Current problems:
-1. Only works when the error is very small.
-2. May not work for extracted point sets with small sizes.
+1. May not work for extracted point sets with small sizes.
+2. Only works when the error is very small. May need a better algorithm to decide when to use it.
 
 Based on:
 K. Koide, "Exact Point Cloud Downsampling for Fast and Accurate Global Trajectory Optimization,"
