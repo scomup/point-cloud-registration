@@ -29,6 +29,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install point-cloud-registration
         pip install q3dviewer==1.1.5
+        pip install pytest
     - name: Test with pytest
       run: |
         pytest
