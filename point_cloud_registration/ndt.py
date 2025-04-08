@@ -37,30 +37,23 @@ class NDT(Registration):
         src_trans = src_trans[mask]
 
         diff = src_trans - means  # shape: (N, 3)
+        J1 = -R @ skews(src_mask)
+        icov_J1 = np.einsum('nij,njk->nik', icov, J1)
+        H_ll = np.sum(icov, axis=0) # sum (J0.T * icov * J0)
+        H_lr = np.sum(icov_J1, axis=0)
+        H_rr = np.einsum('nji,njk->ik', J1, icov_J1)
 
-        # J0 = np.eye(3)  # 3x3
-        J1 = -R @ skews(src_mask) # shape: (N, 3, 3)
-        J0T_icov = icov
-        J1T_icov = np.einsum('kji,kjl->kil', J1, icov)
-
-        # only upper triangle version,
-        # equal to np.einsum('nji,njk,nkl->il', J, icov, J) 
-        # but faster than np.einsum
-        H_00 = np.sum(J0T_icov, axis=0) # sum (J0.T * icov * J0)
-        H_01  = np.sum(np.transpose(J1T_icov, (0, 2, 1)),axis=0)
-        H_11 = np.einsum('nij,njk->ik', J1T_icov, J1)
         H = np.zeros((6, 6))
-        H[:3, :3] = H_00
-        H[:3, 3:] = H_01
-        H[3:, :3] = H_01.T
-        H[3:, 3:] = H_11
+        H[:3, :3] = H_ll
+        H[:3, 3:] = H_lr
+        H[3:, :3] = H_lr.T
+        H[3:, 3:] = H_rr
 
-        g0 = np.einsum('nij,nj->i', J0T_icov, diff)
-        g1 = np.einsum('nij,nj->i', J1T_icov, diff)
+        icov_r = np.einsum('nij,nj->ni', icov, diff)
+        g0 = np.sum(icov_r, axis=0)  # J0.T * icov * diff
+        g1 = np.einsum('nji,nj->i', J1, icov_r) # J1.T * icov * diff
         g = np.hstack([g0, g1])  # shape: (6,)
-
-        e2 = np.einsum('ni,nij,nj->', diff, icov, diff)  # scalar
-
+        e2 = np.einsum('ni,ni->', diff, icov_r)  # r.T * icov * r
         return H, g, e2
 
 

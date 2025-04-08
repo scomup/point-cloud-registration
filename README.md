@@ -19,7 +19,7 @@ The following registration algorithms are supported, with our **pure Python** `p
 | Point-to-Point ICP              | **0.502** | 1.511        | 0.931      |
 | Point-to-Plane ICP [^2]         | **0.334** | 0.677        | 0.835      |
 | Voxelized Point-to-Plane ICP    | **0.420** | N/A          | N/A       |
-| Normal Distributions Transform (NDT) | **0.803** | N/A          | 1.782      |
+| Normal Distributions Transform (NDT) | **0.511** | N/A          | 1.782      |
 | Normal Estimation               | 2.201    | **1.708**    | 2.048      |
 
 ---
@@ -39,6 +39,7 @@ You can benchmark it yourself using the following commands:
 ```bash
 cd benchmark
 python3 speed_test_comparison.py # Compare our implementation with Open3D
+python3 speed_test_comparison_mkl.py # (optional) you can further boost it by using mkl numpy
 mkdir build && cd build
 cmake .. && make
 ./speed_test_comparison # Compare with PCL

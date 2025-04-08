@@ -176,7 +176,7 @@ double test_pcl_voxel_filter(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,
 
 int main() {
   // File path for the map point cloud
-  std::string map_file = "/home/liu/workspace/point-cloud-registration/data/B-01.pcd";
+  std::string map_file = "../../data/B-01.pcd";
 
   // Load map point cloud
   pcl::PointCloud<pcl::PointXYZ>::Ptr map_cloud(

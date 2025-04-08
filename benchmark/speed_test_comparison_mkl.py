@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import time
-from point_cloud_registration import ICP, PlaneICP, NDT, VPlaneICP, voxel_filter, estimate_normals, KDTree, estimate_norm_with_tree
-try:
-    import open3d as o3d
-except ImportError:
-    print("To compare with Open3D, please install Open3D first by using 'pip install open3d")
+
+# Check if MKL is being used by NumPy
+blas_info = np.__config__.get_info('blas_opt_info')
+if blas_info and 'mkl' in str(blas_info).lower():
+    print("MKL is being used by NumPy.")
+else:
+    print("MKL is NOT being used by NumPy.")
+    print("To use MKL, please install the MKL version of NumPy.")
+    print("You can do this by running: pip install intel-numpy")
+    print("After installation, please reinstall pykdtree 1.3.7 by source.")
     exit(1)
 
+
+import time
+from point_cloud_registration import ICP, PlaneICP, NDT, VPlaneICP, voxel_filter, estimate_normals, KDTree, estimate_norm_with_tree
 from test_data import generate_test_data
 
 def test_icp(map_points, scan_points, max_iter, tol, max_dist):
@@ -55,53 +62,10 @@ def test_vppicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size):
     return T_new, elapsed_time
 
 
-def test_open3d_icp(map_points, scan_points, max_iter, tol, max_dist):
-    start_time = time.time()
-    source = o3d.geometry.PointCloud()
-    target = o3d.geometry.PointCloud()
-    source.points = o3d.utility.Vector3dVector(scan_points)
-    target.points = o3d.utility.Vector3dVector(map_points)
-    result = o3d.pipelines.registration.registration_icp(
-        source, target, max_correspondence_distance=max_dist,
-        estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
-        init=np.eye(4),
-        criteria=o3d.pipelines.registration.ICPConvergenceCriteria(
-            max_iteration=max_iter, relative_fitness=tol, relative_rmse=tol))
-    elapsed_time = time.time() - start_time
-    return result.transformation, elapsed_time
-
-
-def test_open3d_ppicp(map_points, scan_points, max_iter, tol, max_dist, k):
-    source = o3d.geometry.PointCloud()
-    target = o3d.geometry.PointCloud()
-    source.points = o3d.utility.Vector3dVector(scan_points)
-    target.points = o3d.utility.Vector3dVector(map_points)
-    target.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN(knn=k))
-    start_time = time.time()
-    result = o3d.pipelines.registration.registration_icp(
-        source, target, max_correspondence_distance=max_dist,
-        estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPlane(),
-        init=np.eye(4),
-        criteria=o3d.pipelines.registration.ICPConvergenceCriteria(
-            max_iteration=max_iter, relative_fitness=tol, relative_rmse=tol))
-    elapsed_time = time.time() - start_time
-    return result.transformation, elapsed_time
-
-
 def test_voxel_filter(voxel_size, points):
     start_time = time.time()
     filtered_points = voxel_filter(points, voxel_size)
     elapsed_time = time.time() - start_time
-    return elapsed_time, filtered_points
-
-
-def test_open3d_voxel_filter(voxel_size, points):
-    start_time = time.time()
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points)
-    downsampled_pcd = pcd.voxel_down_sample(voxel_size)
-    elapsed_time = time.time() - start_time
-    filtered_points = np.asarray(downsampled_pcd.points)
     return elapsed_time, filtered_points
 
 
@@ -111,19 +75,6 @@ def test_our_estimate_normals(points, k):
     """
     start_time = time.time()
     normals = estimate_normals(points, k)
-    elapsed_time = time.time() - start_time
-    return elapsed_time, normals
-
-
-def test_open3d_estimate_normals(points, k):
-    """
-    Test the performance of Open3D's normal estimation.
-    """
-    start_time = time.time()
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points)
-    pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN(knn=k))
-    normals = np.asarray(pcd.normals)
     elapsed_time = time.time() - start_time
     return elapsed_time, normals
 
@@ -172,14 +123,11 @@ if __name__ == '__main__':
     # Test voxel filters
     print("voxel_filter...")
     t1, our_filtered = test_voxel_filter(voxel_size, map_points)
-    print("open3d_voxel_filter...")
-    t2, open3d_filtered = test_open3d_voxel_filter(voxel_size, map_points)
 
     print("\nSpeed Comparison Voxel Filter:")
     print(f"{'Algorithm':<35}{'Execution Time (s)':>20}")
     print("-" * 55)
     print(f"{'Our Voxel Filter':<35}{t1:>20.6f}")
-    print(f"{'Open3D Voxel Filter':<35}{t2:>20.6f}")    
 
     # Test algorithms
     # Output comparison table
@@ -199,19 +147,9 @@ if __name__ == '__main__':
     _, time_vppicp = test_vppicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size)
     print(f"{'Our Voxelized Point-to-Plane ICP':<35}{time_vppicp:>20.6f}")
 
-    _, time_open3d_icp = test_open3d_icp(map_points, scan_points, max_iter, tol, max_dist)
-    print(f"{'Open3D ICP':<35}{time_open3d_icp:>20.6f}")
-    _, time_open3d_ppicp = test_open3d_ppicp(map_points, scan_points, max_iter, tol, max_dist, k)
-    print(f"{'Open3D Point-to-Plane ICP':<35}{time_open3d_ppicp:>20.6f}")
-    test_small_gicp(map_points, scan_points, max_iter, tol, max_dist, voxel_size)
-    # Test normal estimation
-    print("our_estimate_normals...")
     t3, our_normals = test_our_estimate_normals(map_points, k)
-    print("open3d_estimate_normals...")
-    t4, open3d_normals = test_open3d_estimate_normals(map_points, k)
 
     print("\nSpeed Comparison Normal Estimation:")
     print(f"{'Algorithm':<35}{'Execution Time (s)':>20}")
     print("-" * 55)
     print(f"{'Our Normal Estimation':<35}{t3:>20.6f}")
-    print(f"{'Open3D Normal Estimation':<35}{t4:>20.6f}")

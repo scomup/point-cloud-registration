@@ -8,12 +8,6 @@ import numpy as np
 from point_cloud_registration.kdtree import KDTree
 import time
 
-def svd_sqrt(A):
-    U, S, Vt = np.linalg.svd(A)  # SVD decomposition
-    S_sqrt = np.sqrt(S)          # Square root of singular values
-    B = np.diag(S_sqrt) @ Vt     # Compute B
-    return B
-
 
 def get_keys(points, voxel_size=1.0):
     """
@@ -59,10 +53,18 @@ class VoxelGrid:
     An efficient VoxelGrid structure using hash table
     """
 
-    def __init__(self, voxel_size, min_points=6):
+    def __init__(self, voxel_size, min_points=10):
         self.voxel_size = voxel_size
         self.kdtree = None
         self.min_points = min_points
+
+    def calc_sqrt_icov(self):
+        """
+        Calculate the square root of the inverse covariance matrix
+        """
+        L_lower = np.linalg.cholesky(self.icov)
+        L = np.transpose(L_lower, axes=(0, 2, 1))
+        self.sqrt_icov = L
 
     def calc_icov(self):
         """
