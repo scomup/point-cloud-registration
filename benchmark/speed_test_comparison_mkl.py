@@ -8,9 +8,9 @@ if blas_info and 'mkl' in str(blas_info).lower():
     print("MKL is being used by NumPy.")
 else:
     print("MKL is NOT being used by NumPy.")
-    print("To use MKL, please install the MKL version of NumPy.")
+    print("To use MKL, install the MKL version of NumPy.")
     print("You can do this by running: pip install intel-numpy")
-    print("After installation, please reinstall pykdtree 1.3.7 by source.")
+    print("After installation, reinstall pykdtree 1.3.7 from source.")
     exit(1)
 
 
