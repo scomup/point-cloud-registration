@@ -6,7 +6,7 @@ from point_cloud_registration import estimate_normals, get_norm_lines
 try:
     import q3dviewer as q3d
 except ImportError:
-    print("To visualize the results, please install q3dviewer first by using 'pip install q3dviewer==1.1.5'")
+    print("To visualize the results, please install q3dviewer first by using 'pip install q3dviewer==1.1.6'")
     exit(1)
 
 from benchmark.test_data import generate_test_data
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     app = q3d.QApplication([])
     viewer = q3d.Viewer(name='visualize normals')
     viewer.add_items({
-        'points': q3d.CloudItem(size=0.1, 
+        'points': q3d.CloudItem(size=0.01, 
                                 alpha=1, 
                                 point_type='SPHERE', 
                                 color_mode='FLAT', 

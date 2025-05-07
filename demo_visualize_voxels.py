@@ -6,7 +6,7 @@ from benchmark.test_data import generate_test_data
 try:
     import q3dviewer as q3d
 except ImportError:
-    print("To visualize the results, please install q3dviewer first by using 'pip install q3dviewer==1.1.5'")
+    print("To visualize the results, please install q3dviewer first by using 'pip install q3dviewer==1.1.6'")
     exit(1)
 
 

@@ -5,12 +5,12 @@ from point_cloud_registration import ICP, PlaneICP, NDT, VPlaneICP
 from point_cloud_registration import makeRt, expSO3, transform_points, makeT, color_by_voxel
 import numpy as np
 from benchmark.test_data import generate_test_data
-from PySide6.QtWidgets import QDialog, QTextEdit
+from q3dviewer.Qt.QtWidgets import QDialog, QTextEdit, QSpinBox, QLabel, QVBoxLayout, QGroupBox, QDoubleSpinBox, QPushButton
 
 try:
     import q3dviewer as q3d
 except ImportError:
-    print("Please install q3dviewer using 'pip install q3dviewer==1.1.5'")
+    print("Please install q3dviewer using 'pip install q3dviewer==1.1.6'")
     exit(0)
 
 
@@ -45,7 +45,7 @@ class DEMOViewer(q3d.Viewer):
         Add a control panel to the viewer.
         """
         # Create a vertical layout for the settings
-        setting_layout = q3d.QVBoxLayout()
+        setting_layout = QVBoxLayout()
 
         # Create a container widget for the layout
         setting_widget = q3d.QWidget()
@@ -53,10 +53,10 @@ class DEMOViewer(q3d.Viewer):
         setting_widget.setFixedWidth(250)  # Set the fixed width for the settings panel
 
         # Add a label for the settings
-        group_box = q3d.QGroupBox("Matching Settings")
-        group_layout = q3d.QVBoxLayout()
+        group_box = QGroupBox("Matching Settings")
+        group_layout = QVBoxLayout()
 
-        group_layout.addWidget(q3d.QLabel("Select Matching method:"))
+        group_layout.addWidget(QLabel("Select Matching method:"))
         self.combo_items = q3d.QComboBox()
         self.combo_items.addItems(['ICP', 'PlaneICP', 'NDT', 'VPlaneICP'])
         self.combo_items.setCurrentIndex(3)
@@ -66,13 +66,13 @@ class DEMOViewer(q3d.Viewer):
         self.combo_items.currentIndexChanged.connect(self.update_method)
         group_layout.addWidget(self.combo_items)
 
-        self.box_k = q3d.QSpinBox()
+        self.box_k = QSpinBox()
         self.box_k.setRange(5, 30)
         self.box_k.setValue(5)
         self.box_k.setPrefix("kdtree max neighbour: ")
         group_layout.addWidget(self.box_k)
 
-        self.box_v = q3d.QDoubleSpinBox()
+        self.box_v = QDoubleSpinBox()
         self.box_v.setRange(0.5, 2)
         self.box_v.setValue(1)
         self.box_v.setSingleStep(0.1)
@@ -81,7 +81,7 @@ class DEMOViewer(q3d.Viewer):
         self.box_v.valueChanged.connect(self.update_voxel_size)
         group_layout.addWidget(self.box_v)
 
-        self.box_max_dist = q3d.QDoubleSpinBox()
+        self.box_max_dist = QDoubleSpinBox()
         self.box_max_dist.setRange(0.1, 3)
         self.box_max_dist.setValue(1)
         self.box_max_dist.setSingleStep(0.1)
@@ -96,13 +96,13 @@ class DEMOViewer(q3d.Viewer):
         group_layout_pose = q3d.QVBoxLayout()
         # Add XYZ spin boxes
         group_layout_pose.addWidget(q3d.QLabel("Set initial XYZ:"))
-        self.box_x = q3d.QDoubleSpinBox()
+        self.box_x = QDoubleSpinBox()
         self.box_x.setSingleStep(0.01)
         group_layout_pose.addWidget(self.box_x)
-        self.box_y = q3d.QDoubleSpinBox()
+        self.box_y = QDoubleSpinBox()
         self.box_y.setSingleStep(0.01)
         group_layout_pose.addWidget(self.box_y)
-        self.box_z = q3d.QDoubleSpinBox()
+        self.box_z = QDoubleSpinBox()
         self.box_z.setSingleStep(0.01)
         group_layout_pose.addWidget(self.box_z)
         max_trans = 0.5
@@ -111,13 +111,13 @@ class DEMOViewer(q3d.Viewer):
         self.box_z.setRange(-max_trans, max_trans)
         # Add RPY spin boxes
         group_layout_pose.addWidget(q3d.QLabel("Set initial Roll-Pitch-Yaw:"))
-        self.box_roll = q3d.QDoubleSpinBox()
+        self.box_roll = QDoubleSpinBox()
         self.box_roll.setSingleStep(0.01)
         group_layout_pose.addWidget(self.box_roll)
-        self.box_pitch = q3d.QDoubleSpinBox()
+        self.box_pitch = QDoubleSpinBox()
         self.box_pitch.setSingleStep(0.01)
         group_layout_pose.addWidget(self.box_pitch)
-        self.box_yaw = q3d.QDoubleSpinBox()
+        self.box_yaw = QDoubleSpinBox()
         self.box_yaw.setSingleStep(0.01)
         group_layout_pose.addWidget(self.box_yaw)
         max_range = np.pi / 180. * 10
@@ -133,7 +133,7 @@ class DEMOViewer(q3d.Viewer):
         group_box_pose.setLayout(group_layout_pose)
         setting_layout.addWidget(group_box_pose)
 
-        self.button_matching = q3d.QPushButton("Matching")
+        self.button_matching = QPushButton("Matching")
         self.button_matching.setToolTip("Start matching")
         self.button_matching.setStyleSheet(
             "QPushButton { background-color: lightgreen; }")

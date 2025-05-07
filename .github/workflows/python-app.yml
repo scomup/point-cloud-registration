@@ -28,7 +28,7 @@ jobs:
         sudo apt-get install freeglut3-dev
         python -m pip install --upgrade pip
         pip install point-cloud-registration
-        pip install q3dviewer==1.1.5
+        pip install q3dviewer==1.1.6
         pip install pytest
     - name: Test with pytest
       run: |

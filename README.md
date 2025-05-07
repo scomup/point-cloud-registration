@@ -32,7 +32,7 @@ Install via pip:
 
 ```bash
 pip install point-cloud-registration
-pip install q3dviewer==1.1.5 # (optional) for visual demo
+pip install q3dviewer==1.1.6 # (optional) for visual demo
 ```
 
 You can benchmark it yourself using the following commands:
