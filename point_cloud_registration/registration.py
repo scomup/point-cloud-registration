@@ -81,7 +81,9 @@ class Registration:
             raise ValueError("Target is not set.")
 
         source = source.astype(np.float32)
-        cur_T = init_T
+        # Copy: align() must not return the caller's array (or the shared
+        # mutable np.eye(4) default) when it converges before the first step.
+        cur_T = init_T.copy()
         # dx_norm = np.inf
         # best_T = cur_T
         # best_error = np.inf

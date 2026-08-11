@@ -88,7 +88,13 @@ def expSO3(omega):
     nearZero = theta2 <= epsilon
     W = skew(omega)
     if (nearZero):
-        return np.eye(3) + W
+        # Second-order Taylor of sin(theta)/theta and (1-cos(theta))/theta^2:
+        # the first-order I + W is not in SO(3) (det = 1 + O(theta^2)), and
+        # repeated small steps applied through plus() accumulate that
+        # scale/shear error into the pose.
+        A = 1.0 - theta2 / 6.0
+        B = 0.5 - theta2 / 24.0
+        return np.eye(3) + A * W + B * W.dot(W)
     else:
         K = W/theta
         KK = K.dot(K)
