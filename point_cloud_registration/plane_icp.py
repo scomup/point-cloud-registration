@@ -47,10 +47,13 @@ class PlaneICP(Registration):
         diff = src_trans - means
         src_mask = source[mask]
         rs = np.einsum('ij,ij->i', norms, diff)
-        Jt = norms
         Rt_norms = R.T @ norms.T
+        # The tangent-space increment dx is applied by plus() as
+        # T @ [expSO3(dx[3:]) | dx[:3]], so the residual row is
+        # n.T @ [R | -R@skew(p)] = [(R.T@n).T | (skew(p)@R.T@n).T].
+        Jt = Rt_norms.T
         # # equal to skew_time_vector
-        # Jr = np.einsum('ijk,ki->ij', skews(src_mask), Rt_norms) 
+        # Jr = np.einsum('ijk,ki->ij', skews(src_mask), Rt_norms)
         Jr = skew_time_vector(src_mask, Rt_norms.T)
         H_ll = np.einsum('ij,ik->jk', Jt, Jt)
         H_lr = np.einsum('ij,ik->jk', Jt, Jr)
@@ -83,18 +86,17 @@ class PlaneICP(Registration):
         means = self.target[idx]
         norms = self.normal[idx]
         src_trans = src_trans[mask]
+        src_mask = source[mask]
 
         H = np.zeros((6, 6))
         g = np.zeros(6)
         e2 = 0
-        for i in range(source.shape[0]):
+        for i in range(src_mask.shape[0]):
             n = norms[i]
             r = n @ (src_trans[i] - means[i])
             J = np.zeros((1, 6))
-            J[0, :3] = n
-            J[0, 3:] = skew(source[i]) @ (R.T @ n.T)
-            if np.abs(r) > self.max_dist:
-                continue
+            J[0, :3] = R.T @ n
+            J[0, 3:] = skew(src_mask[i]) @ (R.T @ n.T)
             H += J.T @ J
             g += J[0] * r
             e2 += r * r

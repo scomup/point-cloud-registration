@@ -53,10 +53,19 @@ class VoxelGrid:
     An efficient VoxelGrid structure using hash table
     """
 
-    def __init__(self, voxel_size, min_points=10):
+    def __init__(self, voxel_size, min_points=10, cov_reg=0.0):
+        """
+        :param voxel_size: Edge length of a voxel.
+        :param min_points: Voxels holding fewer points than this are discarded.
+        :param cov_reg: Isotropic shift added to every per-voxel covariance.
+            0.0 (the default) leaves the covariances untouched.
+        """
+        if cov_reg < 0.0:
+            raise ValueError(f"cov_reg must be >= 0.0, got {cov_reg}")
         self.voxel_size = voxel_size
         self.kdtree = None
         self.min_points = min_points
+        self.cov_reg = cov_reg
 
     def calc_sqrt_icov(self):
         """
@@ -146,12 +155,20 @@ class VoxelGrid:
             [[c00, c01, c02],
              [c01, c11, c12],
              [c02, c12, c22]]).transpose(2, 0, 1)
-        
+
+        if self.cov_reg > 0.0:
+            # Isotropic shift keeps eigenvectors (normals) intact; prevents singular
+            # covariances when a voxel's points are exactly coplanar/collinear.
+            covs = covs + np.eye(3) * self.cov_reg
+
         # Filter out voxels with too few points
         mask = counts >= self.min_points
         means = means[mask]
         covs = covs[mask]
         # t6 = time.time()
+
+        if len(means) == 0:
+            raise ValueError("data_pts should be non-empty")
 
         # get the normal of each voxel
         _, eigenvectors = np.linalg.eigh(covs)

@@ -71,6 +71,7 @@ print("Estimated Transform matrix:\n", T_new)
 - [x] **Point-to-Plane ICP** – Improved accuracy using normal constraints  
 - [ ] **Generalized ICP (GICP)** – Handles anisotropic noise and improves robustness  
 - [x] **Normal Distributions Transform (NDT)** – Grid-based registration for high-noise environments  
+- [x] **Degeneracy detection + solution remapping** – Hold unobservable DOFs instead of drifting along them  
 - [ ] **Further optimizations** while staying pure Python  
 ### Demo
 
@@ -105,6 +106,38 @@ python3 demo_matching.py
 ```
 
 ![demo](imgs/demo.png)
+
+#### Degeneracy Detection & Solution Remapping
+
+Real-world geometry often under-constrains registration — a featureless
+seafloor, a straight corridor, a staircase. On such scenes the
+unconstrained Gauss-Newton solve slides the estimate along the
+unobservable directions, driven by nothing but noise. `align()` can
+instead eigendecompose its 6×6 Hessian, flag the degenerate directions,
+and hold them at the initial guess while the constrained ones converge
+(solution remapping: Zhang, Kaess & Singh, ICRA 2016; Hinduja, Ho &
+Kaess, IROS 2019):
+
+```python
+icp = PlaneICP(max_iter=50, max_dist=1.0)
+icp.set_target(target)
+T = icp.align(scan, use_solution_remapping=True, lm_damping=True)
+print(icp.last_hessian)  # inspect the observability yourself
+```
+
+```bash
+python3 demo_degeneracy.py --save   # writes imgs/degeneracy_*.png (needs matplotlib)
+```
+
+![Degeneracy demo](imgs/degeneracy_stair.png)
+
+On the synthetic staircase in `data/` only cross-step translation is
+unobservable: plain plane-ICP drifts centimetres along it, solution
+remapping holds it near the initial value while the other five DOFs
+still converge. On a flat plane three DOFs (tx, ty, yaw) are degenerate
+and the effect is an order of magnitude larger. matplotlib is needed
+only by this demo — the feature itself adds no dependencies to the
+library.
 
 ### Comparison of Registration Methods
 

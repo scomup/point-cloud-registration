@@ -10,13 +10,23 @@ from point_cloud_registration.math_tools import skews, transform_points, plus, s
 
 
 class NDT(Registration):
-    def __init__(self, voxel_size=1.0, max_iter=30, max_dist=2, tol=1e-3):
+    def __init__(self, voxel_size=1.0, max_iter=30, max_dist=2, tol=1e-3,
+                 min_points=10, cov_reg=0.0):
+        """
+        :param min_points: Voxels holding fewer points than this are discarded.
+        :param cov_reg: Isotropic shift added to every per-voxel covariance.
+            Coplanar voxels otherwise yield singular covariances, which calc_icov
+            can only handle by clamping the determinant. 0.0 disables it.
+        """
         super().__init__(max_iter=max_iter, tol=tol)
         self.voxel_size = voxel_size
         self.max_dist = max_dist
+        self.min_points = min_points
+        self.cov_reg = cov_reg
 
     def set_target(self, target):
-        self.voxels = VoxelGrid(self.voxel_size)
+        self.voxels = VoxelGrid(self.voxel_size, min_points=self.min_points,
+                                cov_reg=self.cov_reg)
         self.voxels.set_points(target)
         self.voxels.calc_icov() # need for ndt
         self._is_target_set = True
@@ -37,10 +47,12 @@ class NDT(Registration):
         src_trans = src_trans[mask]
 
         diff = src_trans - means  # shape: (N, 3)
+        # The tangent-space increment dx is applied by plus() as
+        # T @ [expSO3(dx[3:]) | dx[:3]], so J0 = R (not I) and J1 = -R@skew(p).
         J1 = -R @ skews(src_mask)
         icov_J1 = np.einsum('nij,njk->nik', icov, J1)
-        H_ll = np.sum(icov, axis=0) # sum (J0.T * icov * J0)
-        H_lr = np.sum(icov_J1, axis=0)
+        H_ll = R.T @ np.sum(icov, axis=0) @ R # sum (J0.T * icov * J0)
+        H_lr = R.T @ np.sum(icov_J1, axis=0)
         H_rr = np.einsum('nji,njk->ik', J1, icov_J1)
 
         H = np.zeros((6, 6))
@@ -50,7 +62,7 @@ class NDT(Registration):
         H[3:, 3:] = H_rr
 
         icov_r = np.einsum('nij,nj->ni', icov, diff)
-        g0 = np.sum(icov_r, axis=0)  # J0.T * icov * diff
+        g0 = R.T @ np.sum(icov_r, axis=0)  # J0.T * icov * diff
         g1 = np.einsum('nji,nj->i', J1, icov_r) # J1.T * icov * diff
         g = np.hstack([g0, g1])  # shape: (6,)
         e2 = np.einsum('ni,ni->', diff, icov_r)  # r.T * icov * r
@@ -75,23 +87,21 @@ class NDT(Registration):
         mask = dist < self.max_dist
         means = means[mask]
         icov = icov[mask]
-        #src_mask = source[mask]
+        src_mask = source[mask]
         src_trans = src_trans[mask]
         H = np.zeros((6, 6))
         g = np.zeros(6)
         e2 = 0
 
-        for i in range(source.shape[0]):
+        for i in range(src_mask.shape[0]):
             J = np.zeros((3, 6))
-            # Jacobian of the transformation
-            J[:, :3] = np.eye(3)
+            # Jacobian of the translation (body-frame increment: t += R @ dt)
+            J[:, :3] = R
             # Jacobian of the rotation
-            J[:, 3:] = -R @ skew(source[i])
+            J[:, 3:] = -R @ skew(src_mask[i])
             # residual
             r = src_trans[i] - means[i]
 
-            if dist[i] > self.max_dist:
-                continue
             H += J.T @ icov[i] @  J
             g += J.T @ icov[i] @ r
             e2 += r @ icov[i] @ r
